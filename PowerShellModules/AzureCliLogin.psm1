@@ -13,7 +13,7 @@ function Connect-ToAzureCliClientSecret {
         --username $ClientId `
         --password $ClientSecret `
         --tenant   $TenantId `
-        --allow-no-subscriptions
+        --allow-no-subscriptions | Out-Null
     _LogMessage -Level 'DEBUG' -Message "az login exit-code: $LASTEXITCODE" -InvocationName $MyInvocation.MyCommand.Name
     if ($LASTEXITCODE -ne 0) {
         _LogMessage -Level 'ERROR' -Message 'az login failed (client-secret).' -InvocationName $MyInvocation.MyCommand.Name
@@ -47,7 +47,7 @@ function Connect-ToAzureCliOidc {
         --username $ClientId `
         --tenant   $TenantId `
         --allow-no-subscriptions `
-        --federated-token $OidcToken
+        --federated-token $OidcToken | Out-Null
     _LogMessage -Level 'DEBUG' -Message "az login exit-code: $LASTEXITCODE" -InvocationName $MyInvocation.MyCommand.Name
     if ($LASTEXITCODE -ne 0) {
         _LogMessage -Level 'ERROR' -Message 'az login failed (OIDC).' -InvocationName $MyInvocation.MyCommand.Name
@@ -218,7 +218,7 @@ function Disconnect-AzureCli {
     }
 
     try {
-        _LogMessage -Level 'INFO' -Message 'azure-cli logout …' -InvocationName $MyInvocation.MyCommand.Name
+        _LogMessage -Level 'INFO' -Message 'Attempting Azure-Cli logout to cleanup …' -InvocationName $MyInvocation.MyCommand.Name
 
         az logout | Out-Null
         $code = $LASTEXITCODE
@@ -230,7 +230,7 @@ function Disconnect-AzureCli {
 
     }
     catch {
-        _LogMessage -Level 'ERROR' -Message "error during azure-cli logout: $($_.Exception.Message)" -InvocationName $MyInvocation.MyCommand.Name
+        _LogMessage -Level 'ERROR' -Message "Error: Azure-Cli logout failed: $($_.Exception.Message)" -InvocationName $MyInvocation.MyCommand.Name
         throw
     }
 }

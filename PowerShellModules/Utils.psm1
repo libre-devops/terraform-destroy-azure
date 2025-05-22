@@ -161,29 +161,6 @@ function ConvertTo-Boolean
     }
 }
 
-# Parse Azure Resource ID to extract Subscription ID, Resource Group, and NSG name
-function Convert-AzureResourceId
-{
-    param (
-        [string]$ResourceId
-    )
-
-    $splitId = $ResourceId -split "/"
-
-    # Ensure that the resource ID has enough parts
-    if ($splitId.Length -ge 9)
-    {
-        $subscriptionId = $splitId[2]
-        $resourceGroup = $splitId[4]
-        $nsgName = $splitId[-1]
-        return @{ SubscriptionId = $subscriptionId; ResourceGroup = $resourceGroup; NsgName = $nsgName }
-    }
-    else
-    {
-        _LogMessage -Level "ERROR" -Message "Invalid Azure resource ID format." -InvocationName "$( $MyInvocation.MyCommand.Name )"
-        throw "Invalid Azure resource ID format."
-    }
-}
 
 function Assert-WhichOs
 {

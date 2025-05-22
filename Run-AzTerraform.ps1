@@ -1,31 +1,3 @@
-<#
-.\Run-AzTerraform.ps1 `
--RunTerraformInit true `
--RunTerraformPlan true `
--RunTerraformApply false `
--RunCheckov true `
--TerraformCodeLocation "examples/module-development" `
--BackendStorageSubscriptionId $Env:BACKEND_STORAGE_SUBSCRIPTION_ID `
--BackendStorageAccountRgName $Env:BACKEND_STORAGE_RESOURCE_GROUP_NAME `
--BackendStorageAccountName $Env:BACKEND_STORAGE_ACCOUNT_NAME `
--BackendStorageAccountBlobContainerName $Env:BACKEND_STORAGE_ACCOUNT_BLOB_CONTAINER_NAME `
--BackendStorageAccountBlobStatefileName "lbd-uks-prd-test-build"
-#>
-
-<#
-.\Run-AzTerraform.ps1 `
--RunTerraformInit true `
--RunTerraformPlan false `
--RunTerraformPlanDestroy true `
--RunTerraformDestroy true `
--TerraformCodeLocation "examples/module-development" `
--BackendStorageSubscriptionId $Env:BACKEND_STORAGE_SUBSCRIPTION_ID `
--BackendStorageAccountRgName $Env:BACKEND_STORAGE_RESOURCE_GROUP_NAME `
--BackendStorageAccountName $Env:BACKEND_STORAGE_ACCOUNT_NAME `
--BackendStorageAccountBlobContainerName $Env:BACKEND_STORAGE_ACCOUNT_BLOB_CONTAINER_NAME `
--BackendStorageAccountBlobStatefileName "lbd-uks-prd-test-build"
-#>
-
 param (
     [string]$RunTerraformInit = "true",
     [string]$RunTerraformPlan = "true",
