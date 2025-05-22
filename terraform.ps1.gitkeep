@@ -1,0 +1,88 @@
+#        # ── Terraform init ───────────────────────────────────────────────────────
+#        if ($convertedRunTerraformInit)
+#        {
+#            _LogMessage -Level 'INFO'  -Message 'Running terraform init…' -InvocationName $MyInvocation.MyCommand.Name
+#
+#            Invoke-TerraformInit `
+#            -WorkingDirectory             $WorkingDirectory `
+#            -BackendStorageAccountName    $BackendStorageAccountName `
+#            -BackendStorageSubscriptionId $BackendStorageSubscriptionId
+#
+#            $invokeTerraformInitSuccessful = ($LASTEXITCODE -eq 0)
+#            if (-not $invokeTerraformInitSuccessful)
+#            {
+#                _LogMessage -Level 'ERROR' -Message 'terraform init failed.' -InvocationName $MyInvocation.MyCommand.Name
+#                throw 'terraform init failed.'
+#            }
+#        }
+#        else
+#        {
+#            _LogMessage -Level 'ERROR' -Message 'Terraform init flag is false – cannot continue.' -InvocationName $MyInvocation.MyCommand.Name
+#            throw 'Terraform initialisation was skipped.'
+#        }
+#
+#        # ── Terraform plan ───────────────────────────────────────────────────────
+#        if ($invokeTerraformInitSuccessful -and $convertedRunTerraformPlan -and -not $convertedRunTerraformPlanDestroy)
+#        {
+#            _LogMessage -Level 'INFO' -Message 'Running terraform plan…' -InvocationName $MyInvocation.MyCommand.Name
+#
+#            Invoke-TerraformPlan -WorkingDirectory $WorkingDirectory
+#            $invokeTerraformPlanSuccessful = ($LASTEXITCODE -eq 0)
+#
+#            if (-not $invokeTerraformPlanSuccessful)
+#            {
+#                _LogMessage -Level 'ERROR' -Message 'terraform plan failed.' -InvocationName $MyInvocation.MyCommand.Name
+#                throw 'terraform plan failed.'
+#            }
+#
+#            if ($convertedRunCheckov)
+#            {
+#                _LogMessage -Level 'INFO' -Message 'Running Checkov scan…' -InvocationName $MyInvocation.MyCommand.Name
+#                Invoke-Checkov -CodeLocation $WorkingDirectory
+#            }
+#        }
+#
+#        # ── Terraform plan destroy ───────────────────────────────────────────────
+#        if ($invokeTerraformInitSuccessful -and $convertedRunTerraformPlanDestroy -and -not $convertedRunTerraformPlan)
+#        {
+#            _LogMessage -Level 'INFO' -Message 'Running terraform plan destroy…' -InvocationName $MyInvocation.MyCommand.Name
+#
+#            Invoke-TerraformPlanDestroy -WorkingDirectory $WorkingDirectory
+#            $invokeTerraformPlanDestroySuccessful = ($LASTEXITCODE -eq 0)
+#
+#            if (-not $invokeTerraformPlanDestroySuccessful)
+#            {
+#                _LogMessage -Level 'ERROR' -Message 'terraform plan destroy failed.' -InvocationName $MyInvocation.MyCommand.Name
+#                throw 'terraform plan destroy failed.'
+#            }
+#        }
+#
+#        # ── Terraform apply ──────────────────────────────────────────────────────
+#        if ($invokeTerraformInitSuccessful -and $convertedRunTerraformApply -and $invokeTerraformPlanSuccessful)
+#        {
+#            _LogMessage -Level 'INFO' -Message 'Running terraform apply…' -InvocationName $MyInvocation.MyCommand.Name
+#
+#            Invoke-TerraformApply
+#            $invokeTerraformApplySuccessful = ($LASTEXITCODE -eq 0)
+#
+#            if (-not $invokeTerraformApplySuccessful)
+#            {
+#                _LogMessage -Level 'ERROR' -Message 'terraform apply failed.' -InvocationName $MyInvocation.MyCommand.Name
+#                throw 'terraform apply failed.'
+#            }
+#        }
+#
+#        # ── Terraform destroy ────────────────────────────────────────────────────
+#        if ($convertedRunTerraformDestroy -and $invokeTerraformPlanDestroySuccessful)
+#        {
+#            _LogMessage -Level 'INFO' -Message 'Running terraform destroy…' -InvocationName $MyInvocation.MyCommand.Name
+#
+#            Invoke-TerraformDestroy
+#            $invokeTerraformDestroySuccessful = ($LASTEXITCODE -eq 0)
+#
+#            if (-not $invokeTerraformDestroySuccessful)
+#            {
+#                _LogMessage -Level 'ERROR' -Message 'terraform destroy failed.' -InvocationName $MyInvocation.MyCommand.Name
+#                throw 'terraform destroy failed.'
+#            }
+#        }

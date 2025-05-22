@@ -3,9 +3,7 @@
 -RunTerraformInit true `
 -RunTerraformPlan true `
 -RunTerraformApply false `
--RunTrivy true `
 -RunCheckov true `
--RunTerraformCompliance true `
 -TerraformCodeLocation "examples/module-development" `
 -BackendStorageSubscriptionId $Env:BACKEND_STORAGE_SUBSCRIPTION_ID `
 -BackendStorageAccountRgName $Env:BACKEND_STORAGE_RESOURCE_GROUP_NAME `
@@ -37,9 +35,6 @@ param (
     [bool]$DebugMode = $false,
     [string]$DeletePlanFiles = "true",
     [string]$TerraformVersion = "latest",
-    [string]$RunTrivy = "true",
-    [string]$RunTerraformCompliance = "false",
-    [string]$TerraformCompliancePolicyFiles = "git:https://github.com/libre-devops/azure-naming-convention.git//?ref=main",
     [string]$RunCheckov = "false",
 
     [Parameter(Mandatory = $true)]
@@ -78,197 +73,7 @@ try
         $DebugPreference = "SilentlyContinue"
     }
 
-    function Convert-ToBoolean($value)
-    {
-        $valueLower = $value.ToLower()
-        if ($valueLower -eq "true")
-        {
-            return $true
-        }
-        elseif ($valueLower -eq "false")
-        {
-            return $false
-        }
-        else
-        {
-            throw "[$( $MyInvocation.MyCommand.Name )] Error: Invalid value - $value. Exiting."
-            exit 1
-        }
-    }
 
-    # Function to check if tenv is installed
-    function Test-TenvExists
-    {
-        try
-        {
-            $tenvPath = Get-Command tenv -ErrorAction Stop
-            Write-Host "[$( $MyInvocation.MyCommand.Name )] Success: Tenv found at: $( $tenvPath.Source )" -ForegroundColor Green
-            if ($TerraformVersion -ne 'default')
-            {
-                Write-Host "[$( $MyInvocation.MyCommand.Name )] Info: Desired terraform version is $TerraformVersion, attempting to install now" -ForegroundColor Green
-                tenv tf install $TerraformVersion --verbose
-                tenv tf use $TerraformVersion --verbose
-            }
-        }
-        catch
-        {
-            Write-Warning "[$( $MyInvocation.MyCommand.Name )] Warning: tenv is not installed or not in PATH. Skipping version checking."
-        }
-    }
-
-    function Run-Trivy
-    {
-        [CmdletBinding()]
-        param (
-            [string]$PlanJsonFile = "tfplan.json",
-            [Parameter(Mandatory = $true)]
-            [string]$WorkingDirectory
-        )
-
-        try
-        {
-            $trivyPath = Get-Command trivy -ErrorAction Stop
-            Write-Host "[$( $MyInvocation.MyCommand.Name )] Success: Trivy found at: $( $trivyPath.Source ), running now..." -ForegroundColor Green
-            trivy config $PlanJsonFile --exit-code 0 # soft fail
-        }
-        catch
-        {
-            throw "[$( $MyInvocation.MyCommand.Name )] Error: Trivy is not installed or not in PATH. Exiting."
-            exit 1
-        }
-    }
-
-    function Run-Checkov
-    {
-        [CmdletBinding()]
-        param (
-            [string]$PlanJsonFile = "tfplan.json",
-            [Parameter(Mandatory = $true)]
-            [string]$WorkingDirectory
-        )
-
-        try
-        {
-            $checkovPath = Get-Command checkov -ErrorAction Stop
-            Write-Host "[$( $MyInvocation.MyCommand.Name )] Success: Checkov found at: $( $checkovPath.Source ), running now..." -ForegroundColor Green
-            checkov -s -f $PlanJsonFile
-        }
-        catch
-        {
-            throw "[$( $MyInvocation.MyCommand.Name )] Error: Checkov is not installed or not in PATH. Exiting."
-            exit 1
-        }
-    }
-
-    function Run-TerraformCompliance
-    {
-        [CmdletBinding()]
-        param (
-            [string]$PlanJsonFile = "tfplan.json",
-            [string]$PolicyFiles = $TerraformCompliancePolicyFiles,
-            [Parameter(Mandatory = $true)]
-            [string]$WorkingDirectory
-        )
-
-        try
-        {
-            $terraformCompliancePath = Get-Command terraform-compliance -ErrorAction Stop
-            Write-Host "[$( $MyInvocation.MyCommand.Name )] Success: Terraform-compliance found at: $( $terraformCompliancePath.Source ), running now..." -ForegroundColor Green
-            terraform-compliance -p $PlanJsonFile -f $PolicyFiles --no-failure
-        }
-        catch
-        {
-            throw "[$( $MyInvocation.MyCommand.Name )] Error: Terraform-Compliance is not installed or not in PATH. Exiting."
-            exit 1
-        }
-    }
-
-    # Function to check if Terraform is installed
-    function Test-TerraformExists
-    {
-        try
-        {
-            $terraformPath = Get-Command terraform -ErrorAction Stop
-            Write-Host "[$( $MyInvocation.MyCommand.Name )] Success: Terraform found at: $( $terraformPath.Source )" -ForegroundColor Green
-        }
-        catch
-        {
-            throw "[$( $MyInvocation.MyCommand.Name )] Error: Terraform is not installed or not in PATH. Exiting."
-            exit 1
-        }
-    }
-
-    function Assert-AzStorageContainer
-    {
-        [CmdletBinding()]
-        param (
-            [Parameter(Mandatory = $true)]
-            [string]$StorageAccountSubscription,
-
-            [Parameter(Mandatory = $true)]
-            [string]$StorageAccountName,
-
-            [Parameter(Mandatory = $true)]
-            [string]$ResourceGroupName,
-
-            [Parameter(Mandatory = $true)]
-            [string]$ContainerName
-        )
-
-        begin {
-            try
-            {
-                $azureAplicationId = $Env:ARM_CLIENT_ID
-                $azureTenantId = $Env:ARM_TENANT_ID
-                $azurePassword = ConvertTo-SecureString $Env:ARM_CLIENT_SECRET -AsPlainText -Force
-                $psCred = New-Object System.Management.Automation.PSCredential($azureAplicationId, $azurePassword)
-                Connect-AzAccount -ServicePrincipal -Credential $psCred -Tenant $azureTenantId | Out-Null
-                Write-Host "Info: Connected to AzAccount using Powershell" -ForegroundColor Yellow
-
-                # Set the subscription context
-                Set-AzContext -SubscriptionId $StorageAccountSubscription | Out-Null
-
-                # Get the Storage Account
-                $storageAccount = Get-AzStorageAccount -ResourceGroupName $ResourceGroupName -Name $StorageAccountName
-            }
-            catch
-            {
-                throw "[$( $MyInvocation.MyCommand.Name )] Error in setting up the Azure context: $_"
-                return
-            }
-        }
-
-        process {
-            try
-            {
-                # Create a storage context using OAuth token
-                $ctx = New-AzStorageContext -StorageAccountName $storageAccount.StorageAccountName -UseConnectedAccount
-
-                # Check if the Blob Container Exists
-                $container = Get-AzStorageContainer -Name $ContainerName -Context $ctx -ErrorAction SilentlyContinue
-
-                # Create the Container if it Doesn't Exist
-                if ($null -eq $container)
-                {
-                    New-AzStorageContainer -Name $ContainerName -Context $ctx
-                    Write-Host "Success: Container '$ContainerName' created." -ForegroundColor Green
-                }
-                else
-                {
-                    Write-Host "Info: Container '$ContainerName' already exists." -ForegroundColor Yellow
-                }
-            }
-            catch
-            {
-                throw "[$( $MyInvocation.MyCommand.Name )] Error in processing the container creation: $_"
-            }
-        }
-
-        end {
-            Write-Host "Operation completed, removing PowerShell Context"
-            Disconnect-AzAccount | Out-Null
-        }
-    }
 
     function Invoke-TerraformInit
     {
@@ -504,15 +309,13 @@ try
     }
 
     # Convert string parameters to boolean
-    $ConvertedRunTerraformInit = Convert-ToBoolean $RunTerraformInit
-    $ConvertedRunTerraformPlan = Convert-ToBoolean $RunTerraformPlan
-    $ConvertedRunTerraformPlanDestroy = Convert-ToBoolean $RunTerraformPlanDestroy
-    $ConvertedRunTerraformApply = Convert-ToBoolean $RunTerraformApply
-    $ConvertedRunTerraformDestroy = Convert-ToBoolean $RunTerraformDestroy
-    $ConvertedDeletePlanFiles = Convert-ToBoolean $DeletePlanFiles
-    $ConvertedRunTrivy = Convert-ToBoolean $RunTrivy
-    $ConvertedRunTerraformCompliance = Convert-ToBoolean $RunTerraformCompliance
-    $ConvertedRunCheckov = Convert-ToBoolean $RunCheckov
+    $ConvertedRunTerraformInit = ConvertTo-Boolean $RunTerraformInit
+    $ConvertedRunTerraformPlan = ConvertTo-Boolean $RunTerraformPlan
+    $ConvertedRunTerraformPlanDestroy = ConvertTo-Boolean $RunTerraformPlanDestroy
+    $ConvertedRunTerraformApply = ConvertTo-Boolean $RunTerraformApply
+    $ConvertedRunTerraformDestroy = ConvertTo-Boolean $RunTerraformDestroy
+    $ConvertedDeletePlanFiles = ConvertTo-Boolean $DeletePlanFiles
+    $ConvertedRunCheckov = ConvertTo-Boolean $RunCheckov
 
 
     # Diagnostic output
@@ -584,17 +387,9 @@ try
             Invoke-TerraformPlan -WorkingDirectory $WorkingDirectory
             $InvokeTerraformPlanSuccessful = ($LASTEXITCODE -eq 0)
 
-            if ($ConvertedRunTrivy -and $InvokeTerraformPlanSuccessful)
-            {
-                Run-Trivy -WorkingDirectory $WorkingDirectory
-            }
             if ($ConvertedRunCheckov -and $InvokeTerraformPlanSuccessful)
             {
                 Run-Checkov -WorkingDirectory $WorkingDirectory
-            }
-            if ($ConvertedRunTerraformCompliance -and $InvokeTerraformPlanSuccessful)
-            {
-                Run-TerraformCompliance -WorkingDirectory $WorkingDirectory
             }
         }
 
@@ -626,6 +421,89 @@ try
                 exit 1
             }
         }
+        try {
+            # ── Terraform init ───────────────────────────────────────────────────────
+            if ($convertedRunTerraformInit) {
+                _LogMessage -Level 'INFO'  -Message 'Running terraform init…' -InvocationName $MyInvocation.MyCommand.Name
+
+                Invoke-TerraformInit `
+            -WorkingDirectory             $WorkingDirectory `
+            -BackendStorageAccountName    $BackendStorageAccountName `
+            -BackendStorageSubscriptionId $BackendStorageSubscriptionId
+
+                $invokeTerraformInitSuccessful = ($LASTEXITCODE -eq 0)
+                if (-not $invokeTerraformInitSuccessful) {
+                    _LogMessage -Level 'ERROR' -Message 'terraform init failed.' -InvocationName $MyInvocation.MyCommand.Name
+                    throw 'terraform init failed.'
+                }
+            }
+            else {
+                _LogMessage -Level 'ERROR' -Message 'Terraform init flag is false – cannot continue.' -InvocationName $MyInvocation.MyCommand.Name
+                throw 'Terraform initialisation was skipped.'
+            }
+
+            # ── Terraform plan ───────────────────────────────────────────────────────
+            if ($invokeTerraformInitSuccessful -and $convertedRunTerraformPlan -and -not $convertedRunTerraformPlanDestroy) {
+                _LogMessage -Level 'INFO' -Message 'Running terraform plan…' -InvocationName $MyInvocation.MyCommand.Name
+
+                Invoke-TerraformPlan -WorkingDirectory $WorkingDirectory
+                $invokeTerraformPlanSuccessful = ($LASTEXITCODE -eq 0)
+
+                if (-not $invokeTerraformPlanSuccessful) {
+                    _LogMessage -Level 'ERROR' -Message 'terraform plan failed.' -InvocationName $MyInvocation.MyCommand.Name
+                    throw 'terraform plan failed.'
+                }
+
+                if ($convertedRunCheckov) {
+                    _LogMessage -Level 'INFO' -Message 'Running Checkov scan…' -InvocationName $MyInvocation.MyCommand.Name
+                    Invoke-Checkov -CodeLocation $WorkingDirectory
+                }
+            }
+
+            # ── Terraform plan destroy ───────────────────────────────────────────────
+            if ($invokeTerraformInitSuccessful -and $convertedRunTerraformPlanDestroy -and -not $convertedRunTerraformPlan) {
+                _LogMessage -Level 'INFO' -Message 'Running terraform plan destroy…' -InvocationName $MyInvocation.MyCommand.Name
+
+                Invoke-TerraformPlanDestroy -WorkingDirectory $WorkingDirectory
+                $invokeTerraformPlanDestroySuccessful = ($LASTEXITCODE -eq 0)
+
+                if (-not $invokeTerraformPlanDestroySuccessful) {
+                    _LogMessage -Level 'ERROR' -Message 'terraform plan destroy failed.' -InvocationName $MyInvocation.MyCommand.Name
+                    throw 'terraform plan destroy failed.'
+                }
+            }
+
+            # ── Terraform apply ──────────────────────────────────────────────────────
+            if ($invokeTerraformInitSuccessful -and $convertedRunTerraformApply -and $invokeTerraformPlanSuccessful) {
+                _LogMessage -Level 'INFO' -Message 'Running terraform apply…' -InvocationName $MyInvocation.MyCommand.Name
+
+                Invoke-TerraformApply
+                $invokeTerraformApplySuccessful = ($LASTEXITCODE -eq 0)
+
+                if (-not $invokeTerraformApplySuccessful) {
+                    _LogMessage -Level 'ERROR' -Message 'terraform apply failed.' -InvocationName $MyInvocation.MyCommand.Name
+                    throw 'terraform apply failed.'
+                }
+            }
+
+            # ── Terraform destroy ────────────────────────────────────────────────────
+            if ($convertedRunTerraformDestroy -and $invokeTerraformPlanDestroySuccessful) {
+                _LogMessage -Level 'INFO' -Message 'Running terraform destroy…' -InvocationName $MyInvocation.MyCommand.Name
+
+                Invoke-TerraformDestroy
+                $invokeTerraformDestroySuccessful = ($LASTEXITCODE -eq 0)
+
+                if (-not $invokeTerraformDestroySuccessful) {
+                    _LogMessage -Level 'ERROR' -Message 'terraform destroy failed.' -InvocationName $MyInvocation.MyCommand.Name
+                    throw 'terraform destroy failed.'
+                }
+            }
+        }
+        catch {
+            _LogMessage -Level 'ERROR' -Message "Script execution error: $($_.Exception.Message)" -InvocationName $MyInvocation.MyCommand.Name
+            throw    # let the error propagate to any higher-level handler
+        }
+
     }
     catch
     {
