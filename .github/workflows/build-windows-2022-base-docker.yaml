@@ -9,7 +9,7 @@ on:
       working_directory:
         type: string
         description: What working directory should be passed to the script
-        default: "containers/windows-server2025"
+        default: "containers/windows-server2022"
       build_context:
         type: string
         description: "The context of the build"
@@ -17,7 +17,7 @@ on:
       docker_image_name:
         type: string
         description: 'Docker Image name?'
-        default: "terraform-azure-azdo-pipeline-templates/windowsserver2025"
+        default: "terraform-azure-azdo-pipeline-templates/windowsserver2022"
       enable_debug_mode:
         type: boolean
         description: 'Whether debug mode should be enable for within the script'

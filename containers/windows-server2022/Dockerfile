@@ -1,8 +1,8 @@
-FROM mcr.microsoft.com/windows/server:ltsc2025
+FROM mcr.microsoft.com/windows/server:ltsc2022
 
 # escape=`
 
-LABEL org.opencontainers.image.title=windows-servercore2025
+LABEL org.opencontainers.image.title=windows-server2022
 LABEL org.opencontainers.image.source=https://github.com/libre-devops/terraform-azure-azdo-pipeline-templates
 
 COPY tls-fix.ps1 /tls-fix.ps1
