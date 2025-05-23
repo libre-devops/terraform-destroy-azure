@@ -17,7 +17,7 @@ on:
       docker_image_name:
         type: string
         description: 'Docker Image name?'
-        default: "terraform-azure-azdo-pipeline-templates/ubuntu"
+        default: "terraform-azure-azdo-pipeline-templates/rhel"
       enable_debug_mode:
         type: boolean
         description: 'Whether debug mode should be enable for within the script'
