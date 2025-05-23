@@ -4,6 +4,8 @@ FROM registry.access.redhat.com/ubi9/ubi:latest
 LABEL org.opencontainers.image.title=rhel
 LABEL org.opencontainers.image.source=https://github.com/libre-devops/terraform-azure-azdo-pipeline-templates
 
+RUN rm -rf /bin/sh && ln -sf /bin/bash /bin/sh
+
 #Set args with blank values - these will be over-written with the CLI
 ARG NORMAL_USER=builder
 ARG DEBIAN_FRONTEND=noninteractive
@@ -16,6 +18,8 @@ ENV TARGETARCH ${TARGETARCH}
 
 # Environment variables for pyenv
 ENV HOME /home/${NORMAL_USER}
+ENV PYENV_ROOT /home/${NORMAL_USER}/.pyenv
+ENV PATH $PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
 
 #Set path vars
 ENV PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt:/opt/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.local/bin:/home/${NORMAL_USER}/.local:/home/${NORMAL_USER}:/home/${NORMAL_USER}/.tenv:/home/${NORMAL_USER}/.tenv/bin:/home/${NORMAL_USER}/.pkenv:/home/${NORMAL_USER}/.pkenv/bin:/home/${NORMAL_USER}/.pyenv:/home/${NORMAL_USER}/.pyenv/bin:/home/${NORMAL_USER}/.pyenv/shims:/home/${NORMAL_USER}/.local/bin"
@@ -72,6 +76,13 @@ RUN POWERSHELL_RELEASE_URL=$(curl -s -L https://api.github.com/repos/PowerShell/
     ln -s /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh && \
     ln -s /usr/bin/pwsh /usr/bin/powershell
 
+RUN git clone https://github.com/pyenv/pyenv.git /home/${NORMAL_USER}/.pyenv && \
+    eval "$(pyenv init --path)" && \
+    pyenvLatestStable=$(pyenv install --list | grep -v - | grep -E "^\s*[0-9]+\.[0-9]+\.[0-9]+$" | tail -1) && \
+    pyenv install $pyenvLatestStable && \
+    pyenv global $pyenvLatestStable && \
+    pip install --upgrade pip
+
 #Install Azure Modules for Powershell - This can take a while, so setting as final step to shorten potential rebuilds
 RUN pwsh -Command Set-PSRepository -Name "PSGallery" -InstallationPolicy Trusted && \
     pwsh -Command Install-Module -Name Az -Force -AllowClobber -Scope AllUsers -Repository PSGallery && \
@@ -90,23 +101,18 @@ RUN chmod +x /home/${NORMAL_USER}/Run-AzTerraform.ps1 && \
 USER ${NORMAL_USER}
 WORKDIR /home/${NORMAL_USER}
 
+RUN tenv tf install latest --verbose && \
+    tenv tf use latest --verbose
+
 RUN echo -en "\n" | /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" && \
     echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/${NORMAL_USER}/.bashrc && \
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && \
     brew install gcc && \
     brew install pipx && \
     brew install azure-cli && \
-    brew install tenv && \
-    brew install pyenv
+    brew install tenv
 
 RUN tenv tf install latest --verbose && \
-        tenv tf use latest --verbose
-
-
-RUN eval "$(pyenv init --path)" && \
-            pyenvLatestStable=$(pyenv install --list | grep -v - | grep -E "^\s*[0-9]+\.[0-9]+\.[0-9]+$" | tail -1) && \
-            pyenv install $pyenvLatestStable && \
-            pyenv global $pyenvLatestStable && \
-            pip install --upgrade pip
+    tenv tf use latest --verbose
 
 SHELL ["pwsh", "-Command"]

@@ -9,7 +9,7 @@ on:
       working_directory:
         type: string
         description: What working directory should be passed to the script
-        default: "github_workspace"
+        default: "containers/ubuntu"
       build_context:
         type: string
         description: "The context of the build"
@@ -62,7 +62,7 @@ jobs:
           
           .\Run-Docker.ps1 `
             -WorkingDirectory $workingDirectory `
-            -BuildContext ${{ inputs.build_context }} `
+            -BuildContext ${{ github.workspace }} `
             -PushDockerImage ${{ inputs.push_docker_image }} `
             -DebugMode ${{ inputs.enable_debug_mode }} `
             -DockerImageName ${{ inputs.docker_image_name }} `

@@ -14,6 +14,8 @@ ENV TARGETARCH ${TARGETARCH}
 
 # Environment variables for pyenv
 ENV HOME /home/${NORMAL_USER}
+ENV PYENV_ROOT /home/${NORMAL_USER}/.pyenv
+ENV PATH $PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
 
 #Set path vars
 ENV PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt:/opt/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.local/bin:/home/${NORMAL_USER}/.pyenv:/home/${NORMAL_USER}/.pyenv/bin:/home/${NORMAL_USER}/.local:/home/${NORMAL_USER}/.tenv:/home/${NORMAL_USER}/.tenv/bin:/home/${NORMAL_USER}/.pkenv:/home/${NORMAL_USER}/.pkenv/bin:/home/${NORMAL_USER}/.goenv:/home/${NORMAL_USER}/.goenv/bin:/home/${NORMAL_USER}/.jenv:/home/${NORMAL_USER}/.jenv/bin:/home/${NORMAL_USER}/.nvm:/home/${NORMAL_USER}/.rbenv:/home/${NORMAL_USER}/.rbenv/bin:/home/${NORMAL_USER}/.sdkman:/home/${NORMAL_USER}/.sdkman/bin:/home/${NORMAL_USER}/.dotnet:/home/${NORMAL_USER}/.cargo:/home/${NORMAL_USER}/.cargo/bin:/home/${NORMAL_USER}/.phpenv:/home/${NORMAL_USER}/.phpenv/bin:/home/${NORMAL_USER}:/home/${NORMAL_USER}/.pyenv/shims:/home/${NORMAL_USER}/.local/bin"
@@ -65,6 +67,14 @@ RUN useradd -ms /bin/bash ${NORMAL_USER} && \
     curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign_${LATEST_VERSION}_amd64.deb" && \
     sudo dpkg -i cosign_${LATEST_VERSION}_amd64.deb
 
+
+RUN git clone https://github.com/pyenv/pyenv.git /home/${NORMAL_USER}/.pyenv && \
+    eval "$(pyenv init --path)" && \
+    pyenvLatestStable=$(pyenv install --list | grep -v - | grep -E "^\s*[0-9]+\.[0-9]+\.[0-9]+$" | tail -1) && \
+    pyenv install $pyenvLatestStable && \
+    pyenv global $pyenvLatestStable && \
+    pip install --upgrade pip
+
 # Install PowerShell
 RUN curl -sSLO https://packages.microsoft.com/config/ubuntu/$(grep -oP '(?<=^DISTRIB_RELEASE=).+' /etc/lsb-release | tr -d '"')/packages-microsoft-prod.deb && \
     dpkg -i packages-microsoft-prod.deb && \
@@ -103,7 +113,6 @@ RUN echo -en "\n" | /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com
     brew install gcc && \
     brew install pipx && \
     brew install tenv && \
-    brew install pyenv && \
     brew install azure-cli
 
 RUN tenv tf install latest --verbose && \
