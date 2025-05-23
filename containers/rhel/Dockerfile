@@ -101,9 +101,6 @@ RUN chmod +x /home/${NORMAL_USER}/Run-AzTerraform.ps1 && \
 USER ${NORMAL_USER}
 WORKDIR /home/${NORMAL_USER}
 
-RUN tenv tf install latest --verbose && \
-    tenv tf use latest --verbose
-
 RUN echo -en "\n" | /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" && \
     echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/${NORMAL_USER}/.bashrc && \
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && \
