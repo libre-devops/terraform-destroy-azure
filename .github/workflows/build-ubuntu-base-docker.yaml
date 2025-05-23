@@ -51,7 +51,7 @@ jobs:
         id: run-script
         shell: pwsh
         run: |
-          if (${{ inputs.working_directory }} -eq "github_workspace) 
+          if (${{ inputs.working_directory }} -eq "github_workspace") 
           {
             $workingDirectory = ${{ github.workspace }}
           }
