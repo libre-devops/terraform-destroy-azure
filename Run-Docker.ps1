@@ -71,27 +71,38 @@ function Check-DockerExists {
 }
 
 function Build-DockerImage {
+    [CmdletBinding()]
     param (
-        [string] $ContextPath,
-        [string] $DockerFile
+        [Parameter(Mandatory)]
+        [string] $DockerfilePath,      # e.g. "containers/ubuntu/Dockerfile"
+        [string] $ContextPath = '.'     # e.g. ".", or override to repo root
     )
 
-    $dockerfilePath = Join-Path $ContextPath $DockerFile
-    if (-not (Test-Path $dockerfilePath)) {
-        Write-Error "Dockerfile not found at $dockerfilePath"; return $false
+    # resolve full paths
+    $fullDockerfilePath = Resolve-Path -Path $DockerfilePath -ErrorAction Stop
+    $fullContextPath    = Resolve-Path -Path $ContextPath    -ErrorAction Stop
+
+    if (-not (Test-Path $fullDockerfilePath)) {
+        Write-Error "Dockerfile not found at $fullDockerfilePath"; return $false
+    }
+    if (-not (Test-Path $fullContextPath)) {
+        Write-Error "Build context not found at $fullContextPath"; return $false
     }
 
-    Write-Host "⏳ Building '$DockerImageName' from '$dockerfilePath' (context: $ContextPath)"
+    Write-Host "⏳ Building '$DockerImageName' from Dockerfile: $fullDockerfilePath"
+    Write-Host "    context: $fullContextPath"
+
     docker build `
-        -f $dockerfilePath `
+        -f $fullDockerfilePath `
         -t $DockerImageName `
-        $ContextPath | Out-Host
+        $fullContextPath | Out-Host
 
     if ($LASTEXITCODE -ne 0) {
         Write-Error "docker build failed (exit $LASTEXITCODE)"; return $false
     }
     return $true
 }
+
 
 function Push-DockerImage {
     param([string[]] $FullTagNames)
