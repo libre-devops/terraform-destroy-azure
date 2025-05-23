@@ -5,7 +5,7 @@ FROM mcr.microsoft.com/windows/server:ltsc2022
 LABEL org.opencontainers.image.title=windows-server2022
 LABEL org.opencontainers.image.source=https://github.com/libre-devops/terraform-azure-azdo-pipeline-templates
 
-COPY tls-fix.ps1 /tls-fix.ps1
+COPY ./tls-fix.ps1 /tls-fix.ps1
 
 ARG ACCEPT_EULA=y
 ENV ACCEPT_EULA ${ACCEPT_EULA}
