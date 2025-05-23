@@ -10,10 +10,14 @@ on:
         type: string
         description: What working directory should be passed to the script
         default: "containers/windows-servercore2025"
+      build_context:
+        type: string
+        description: "The context of the build"
+        default: "github_workspace"
       docker_image_name:
         type: string
         description: 'Docker Image name?'
-        default: "terraform-azure-azdo-pipeline-templates/windows-servercore2025"
+        default: "terraform-azure-azdo-pipeline-templates/ubuntu"
       enable_debug_mode:
         type: boolean
         description: 'Whether debug mode should be enable for within the script'
@@ -47,9 +51,18 @@ jobs:
         id: run-script
         shell: pwsh
         run: |
-          $workingDirectory = Join-Path -Path "${{ github.workspace }}" -ChildPath "${{ inputs.working_directory }}"
+          if ("${{ inputs.working_directory }}" -eq "github_workspace") 
+          {
+            $workingDirectory = "${{ github.workspace }}"
+          }
+          else
+          {
+            $workingDirectory = "${{ inputs.working_directory }}"
+          }
+          
           .\Run-Docker.ps1 `
             -WorkingDirectory $workingDirectory `
+            -BuildContext ${{ github.workspace }} `
             -PushDockerImage ${{ inputs.push_docker_image }} `
             -DebugMode ${{ inputs.enable_debug_mode }} `
             -DockerImageName ${{ inputs.docker_image_name }} `
