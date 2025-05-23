@@ -87,7 +87,7 @@ RUN chown -R ${NORMAL_USER}:${NORMAL_USER} /opt && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 COPY Run-AzTerraform.ps1 /home/${NORMAL_USER}/Run-AzTerraform.ps1
-COPY PowerShellModules /home/${NORMAL_USER}/PowerShellModules
+COPY PowerShellModules/ /home/${NORMAL_USER}/PowerShellModules
 
 RUN chmod +x /home/${NORMAL_USER}/Run-AzTerraform.ps1 && \
     chmod +x /home/${NORMAL_USER}/PowerShellModules && \
