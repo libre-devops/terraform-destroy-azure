@@ -67,12 +67,14 @@ RUN useradd -ms /bin/bash ${NORMAL_USER} && \
     sudo dpkg -i cosign_${LATEST_VERSION}_amd64.deb
 
 # Install PowerShell
-RUN curl -sSLO https://packages.microsoft.com/config/debian/$(grep -oP '(?<=^DISTRIB_RELEASE=).+' /etc/lsb-release | tr -d '"')/packages-microsoft-prod.deb && \
-    dpkg -i packages-microsoft-prod.deb && \
-    rm -f packages-microsoft-prod.deb && \
-    apt-get update && \
-    apt-get install -y powershell && \
-    ln -s /usr/bin/pwsh /usr/bin/powershell
+ARG DEBIAN_VERSION=$(grep '^VERSION_ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
+RUN curl -sSL "https://packages.microsoft.com/config/debian/${DEBIAN_VERSION}/packages-microsoft-prod.deb" \
+    -o packages-microsoft-prod.deb \
+ && dpkg -i packages-microsoft-prod.deb \
+ && rm packages-microsoft-prod.deb \
+ && apt-get update \
+ && apt-get install -y powershell \
+ && ln -sf /usr/bin/pwsh /usr/bin/powershell
 
 #Install Azure Modules for Powershell - This can take a while, so setting as final step to shorten potential rebuilds
 RUN pwsh -Command Set-PSRepository -Name "PSGallery" -InstallationPolicy Trusted && \
