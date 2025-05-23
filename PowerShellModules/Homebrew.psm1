@@ -1,4 +1,5 @@
-function Assert-HomebrewPath {
+function Assert-HomebrewPath
+{
     _LogMessage -Level "INFO" -Message "Ensuring Homebrew is available in the PATH..." -InvocationName "$( $MyInvocation.MyCommand.Name )"
 
     # Get the output of the shellenv command from Homebrew
@@ -9,9 +10,12 @@ function Assert-HomebrewPath {
     Invoke-Expression $brewShellEnvString
 
     # Test if brew is now available in the session
-    if (Get-Command brew -ErrorAction SilentlyContinue) {
+    if (Get-Command brew -ErrorAction SilentlyContinue)
+    {
         _LogMessage -Level "INFO" -Message  "Homebrew is now available in the PATH." -InvocationName "$( $MyInvocation.MyCommand.Name )"
-    } else {
+    }
+    else
+    {
         _LogMessage -Level "ERROR" -Message "Homebrew is not available. Something went wrong." -InvocationName "$( $MyInvocation.MyCommand.Name )"
         exit 1
     }

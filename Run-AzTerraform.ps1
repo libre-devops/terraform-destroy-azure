@@ -2,512 +2,357 @@ param (
     [string]$RunTerraformInit = "true",
     [string]$RunTerraformPlan = "true",
     [string]$RunTerraformPlanDestroy = "false",
-    [string]$RunTerraformApply = "false",
+    [string]$RunTerraformApply = "true",
     [string]$RunTerraformDestroy = "false",
-    [bool]$DebugMode = $false,
+    [string[]]$TerraformPlanExtraArgs = $null,
+    [string[]]$TerraformPlanDestroyExtraArgs = $null,
+    [string[]]$TerraformApplyExtraArgs = $null,
+    [string[]]$TerraformDestroyExtraArgs = $null,
+    [string]$DebugMode = "false",
     [string]$DeletePlanFiles = "true",
     [string]$TerraformVersion = "latest",
-    [string]$RunCheckov = "false",
-
-    [Parameter(Mandatory = $true)]
-    [string]$TerraformCodeLocation,
-
-    [Parameter(Mandatory = $true)]
-    [string]$BackendStorageSubscriptionId,
-
-    [Parameter(Mandatory = $true)]
-    [string]$BackendStorageAccountName,
-
-    [Parameter(Mandatory = $true)]
-    [string]$BackendStorageAccountRgName,
-
-    [Parameter(Mandatory = $true)]
-    [string]$BackendStorageAccountBlobContainerName,
-
-    [Parameter(Mandatory = $true)]
-    [string]$BackendStorageAccountBlobStatefileName
+    [string]$RunCheckov = "true",
+    [string]$CheckovSkipCheck = "CKV2_AZURE_31",
+    [string]$CheckovSoftfail = "true",
+    [string]$TerraformPlanFileName = "tfplan.plan",
+    [string]$TerraformDestroyPlanFileName = "tfplan-destroy.plan",
+    [string]$TerraformCodeLocation = "terraform",
+    [string[]]$TerraformStackToRun = @('all'),
+    [string]$CreateTerraformWorkspace = "true",
+    [string]$TerraformWorkspace = "dev",
+    [string]$AttemptAzureLogin = "true",
+    [string]$UseAzureClientSecretLogin = "true",
+    [string]$UseAzureOidcLogin = "false",
+    [string]$UseAzureUserLogin = "false",
+    [string]$UseAzureManagedIdentityLogin = "false"
 )
 
-try
-{
-    $ErrorActionPreference = 'Stop'
-    $CurrentWorkingDirectory = (Get-Location).path
-    $TerraformCodePath = Join-Path -Path $CurrentWorkingDirectory -ChildPath $TerraformCodeLocation
+$ErrorActionPreference = 'Stop'
+$currentWorkingDirectory = (Get-Location).path
+$fullTerraformCodePath = Join-Path -Path $currentWorkingDirectory -ChildPath $TerraformCodeLocation
 
-    # Enable debug mode if DebugMode is set to $true
-    if ($DebugMode)
+# Get script directory
+$scriptDir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
+
+# Import all required modules
+$modules = @("Logger", "Utils", "AzureCliLogin", "Terraform", "Homebrew", "Checkov", "Tenv", "Choco", "TerraformDocs")
+foreach ($module in $modules)
+{
+    $modulePath = Join-Path -Path $scriptDir -ChildPath "PowerShellModules/$module.psm1"
+    if (Test-Path $modulePath)
     {
-        $DebugPreference = "Continue"
-        $Env:TF_LOG = "DEBUG"
+        Import-Module $modulePath -Force -ErrorAction Stop
     }
     else
     {
-        $DebugPreference = "SilentlyContinue"
-    }
-
-
-
-    function Invoke-TerraformInit
-    {
-        [CmdletBinding()]
-        param (
-            [Parameter(Mandatory = $true)]
-            [string]$BackendStorageSubscriptionId,
-
-            [Parameter(Mandatory = $true)]
-            [string]$BackendStorageAccountName,
-
-            [Parameter(Mandatory = $true)]
-            [string]$WorkingDirectory
-        )
-
-        Begin {
-
-            # Initial setup and variable declarations
-            Write-Debug "[$( $MyInvocation.MyCommand.Name )] Debug: Initializing Terraform..."
-            $BackendStorageAccountBlobContainerName = $BackendStorageAccountBlobContainerName
-            $BackendStorageAccountRgName = $BackendStorageAccountRgName
-
-            Assert-AzStorageContainer `
-                -StorageAccountSubscription $BackendStorageSubscriptionId `
-                -StorageAccountName $BackendStorageAccountName `
-                -ResourceGroupName $BackendStorageAccountRgName `
-                -ContainerName $BackendStorageAccountBlobContainerName
-        }
-
-        Process {
-            try
-            {
-
-                $terraformCache = Join-Path -Path $WorkingDirectory -ChildPath ".terraform"
-
-                if (Test-Path -Path $terraformCache)
-                {
-                    try
-                    {
-                        Write-Debug "[$( $MyInvocation.MyCommand.Name )] Debug: Attempting to remove : $terraformCache"
-                        Remove-Item -Force $terraformCache -Recurse -Confirm:$false
-                    }
-                    catch
-                    {
-                        throw "[$( $MyInvocation.MyCommand.Name )] Error: Failed to remove .terraform folder: $_"
-                        exit 1
-                    }
-                }
-
-                # Change to the specified working directory
-                Set-Location -Path $WorkingDirectory
-
-                # Construct the backend config parameters
-                $backendConfigParams = @(
-                    "-backend-config=subscription_id=$BackendStorageSubscriptionId",
-                    "-backend-config=storage_account_name=$BackendStorageAccountName",
-                    "-backend-config=resource_group_name=$BackendStorageAccountRgName",
-                    "-backend-config=container_name=$BackendStorageAccountBlobContainerName"
-                    "-backend-config=key=$BackendStorageAccountBlobStatefileName"
-                )
-
-                Write-Debug "[$( $MyInvocation.MyCommand.Name )] Debug: Backend config params are: $backendConfigParams"
-
-                # Run terraform init with the constructed parameters
-                terraform init @backendConfigParams | Out-Host
-                Write-Debug "[$( $MyInvocation.MyCommand.Name )] Debug: Last exit code is $LASTEXITCODE"
-                # Check if terraform init was successful
-                if ($LASTEXITCODE -ne 0)
-                {
-                    throw "[$( $MyInvocation.MyCommand.Name )] Error: Terraform init failed with exit code $LASTEXITCODE"
-                    exit 1
-                }
-            }
-            catch
-            {
-                throw "[$( $MyInvocation.MyCommand.Name )] Error: Terraform init failed with exception: $_"
-                exit 1
-            }
-        }
-
-        End {
-            Write-Debug "[$( $MyInvocation.MyCommand.Name )] Debug: Terraform initialization completed."
-        }
-    }
-
-
-    function Invoke-TerraformPlan
-    {
-        [CmdletBinding()]
-        param (
-            [string]$WorkingDirectory = $WorkingDirectory,
-            [bool]$RunTerraformPlan = $true
-        )
-
-        Begin {
-            Write-Debug "[$( $MyInvocation.MyCommand.Name )] Begin: Initializing Terraform Plan in $WorkingDirectory"
-        }
-
-        Process {
-            if ($RunTerraformPlan)
-            {
-                Write-Host "[$( $MyInvocation.MyCommand.Name )] Info: Running Terraform Plan in $WorkingDirectory" -ForegroundColor Green
-                try
-                {
-                    Set-Location -Path $WorkingDirectory
-                    terraform plan -out tfplan.plan | Out-Host
-
-                    if (Test-Path tfplan.plan)
-                    {
-                        terraform show -json tfplan.plan | Tee-Object -FilePath tfplan.json | Out-Null
-                    }
-                    else
-                    {
-                        throw "[$( $MyInvocation.MyCommand.Name )] Error: Terraform plan file not created"
-                        exit 1
-                    }
-                }
-                catch
-                {
-                    throw "[$( $MyInvocation.MyCommand.Name )] Error encountered during Terraform plan: $_"
-                    exit 1
-                }
-            }
-        }
-
-        End {
-            Write-Debug "[$( $MyInvocation.MyCommand.Name )] End: Completed Terraform Plan execution"
-        }
-    }
-
-
-
-    # Function to execute Terraform plan for destroy
-    function Invoke-TerraformPlanDestroy
-    {
-        [CmdletBinding()]
-        param (
-            [string]$WorkingDirectory = $WorkingDirectory,
-            [bool]$RunTerraformPlanDestroy = $true
-        )
-
-        Begin {
-            Write-Debug "[$( $MyInvocation.MyCommand.Name )] Begin: Preparing to execute Terraform Plan Destroy in $WorkingDirectory"
-        }
-
-        Process {
-            if ($RunTerraformPlanDestroy)
-            {
-                try
-                {
-                    Write-Host "[$( $MyInvocation.MyCommand.Name )] Info: Running Terraform Plan Destroy in $WorkingDirectory" -ForegroundColor Yellow
-                    Set-Location -Path $WorkingDirectory
-                    terraform plan -destroy -out tfplan.plan | Out-Host
-
-                    if (Test-Path tfplan.plan)
-                    {
-                        terraform show -json tfplan.plan | Tee-Object -FilePath tfplan.json | Out-Null
-                    }
-                    else
-                    {
-                        throw "[$( $MyInvocation.MyCommand.Name )] Error: Terraform plan file not created"
-                        exit 1
-                    }
-                }
-                catch
-                {
-                    throw  "[$( $MyInvocation.MyCommand.Name )] Error encountered during Terraform Plan Destroy: $_"
-                    exit 1
-                }
-            }
-            else
-            {
-                throw  "[$( $MyInvocation.MyCommand.Name )] Error encountered during Terraform Plan Destroy or internal script error occured: $_"
-                exit 1
-            }
-        }
-
-        End {
-            Write-Debug "[$( $MyInvocation.MyCommand.Name )] End: Completed execution of Terraform Plan Destroy"
-        }
-    }
-
-    # Function to execute Terraform apply
-    function Invoke-TerraformApply
-    {
-        if ($RunTerraformApply -eq $true)
-        {
-            try
-            {
-                Write-Host "[$( $MyInvocation.MyCommand.Name )] Info: Running Terraform Apply in $WorkingDirectory" -ForegroundColor Yellow
-                if (Test-Path tfplan.plan)
-                {
-                    terraform apply -auto-approve tfplan.plan | Out-Host
-                }
-                else
-                {
-                    throw "[$( $MyInvocation.MyCommand.Name )] Error: Terraform plan file not present for terraform apply"
-                    return $false
-                }
-            }
-            catch
-            {
-                throw "[$( $MyInvocation.MyCommand.Name )] Error: Terraform Apply failed"
-                return $false
-            }
-        }
-    }
-
-    # Function to execute Terraform destroy
-    function Invoke-TerraformDestroy
-    {
-        if ($RunTerraformDestroy -eq $true)
-        {
-            try
-            {
-                Write-Host "[$( $MyInvocation.MyCommand.Name )] Info: Running Terraform Destroy in $WorkingDirectory" -ForegroundColor Yellow
-                if (Test-Path tfplan.plan)
-                {
-                    terraform apply -auto-approve tfplan.plan | Out-Host
-                }
-                else
-                {
-                    throw "[$( $MyInvocation.MyCommand.Name )] Error: Terraform plan file not present for terraform destroy"
-                    return $false
-                }
-            }
-            catch
-            {
-                throw "[$( $MyInvocation.MyCommand.Name )] Error: Terraform Destroy failed"
-                return $false
-            }
-        }
-    }
-
-    # Convert string parameters to boolean
-    $ConvertedRunTerraformInit = ConvertTo-Boolean $RunTerraformInit
-    $ConvertedRunTerraformPlan = ConvertTo-Boolean $RunTerraformPlan
-    $ConvertedRunTerraformPlanDestroy = ConvertTo-Boolean $RunTerraformPlanDestroy
-    $ConvertedRunTerraformApply = ConvertTo-Boolean $RunTerraformApply
-    $ConvertedRunTerraformDestroy = ConvertTo-Boolean $RunTerraformDestroy
-    $ConvertedDeletePlanFiles = ConvertTo-Boolean $DeletePlanFiles
-    $ConvertedRunCheckov = ConvertTo-Boolean $RunCheckov
-
-
-    # Diagnostic output
-    Write-Debug "[$( $MyInvocation.MyCommand.Name )] Debug: ConvertedRunTerraformInit: $ConvertedRunTerraformInit"
-    Write-Debug "[$( $MyInvocation.MyCommand.Name )] Debug: ConvertedRunTerraformPlan: $ConvertedRunTerraformPlan"
-    Write-Debug "[$( $MyInvocation.MyCommand.Name )] Debug: ConvertedRunTerraformPlanDestroy: $ConvertedRunTerraformPlanDestroy"
-    Write-Debug "[$( $MyInvocation.MyCommand.Name )] Debug: ConvertedRunTerraformApply: $ConvertedRunTerraformApply"
-    Write-Debug "[$( $MyInvocation.MyCommand.Name )] Debug: ConvertedRunTerraformDestroy: $ConvertedRunTerraformDestroy"
-    Write-Debug "[$( $MyInvocation.MyCommand.Name )] Debug: DebugMode: $DebugMode"
-    Write-Debug "[$( $MyInvocation.MyCommand.Name )] Debug: ConvertedDeletePlanFiles: $ConvertedDeletePlanFiles"
-
-
-    # Chicken and Egg checker
-    if (-not$ConvertedRunTerraformInit -and ($ConvertedRunTerraformPlan -or $ConvertedRunTerraformPlanDestroy -or $ConvertedRunTerraformApply -or $ConvertedRunTerraformDestroy))
-    {
-        throw "[$( $MyInvocation.MyCommand.Name )] Error: Terraform init must be run before executing plan, plan destroy, apply, or destroy commands."
+        Write-Host "ERROR:  [$( $MyInvocation.MyCommand.Name )] Module not found: $modulePath" -ForegroundColor Red
         exit 1
     }
+}
 
-    if ($ConvertedRunTerraformPlan -eq $true -and $ConvertedRunTerraformPlanDestroy -eq $true)
+# Log that modules were loaded
+_LogMessage -Level "INFO" -Message "[$( $MyInvocation.MyCommand.Name )] Modules loaded successfully" -InvocationName "$( $MyInvocation.MyCommand.Name )"
+
+$convertedDebugMode = ConvertTo-Boolean $DebugMode
+_LogMessage -Level 'DEBUG' -Message "DebugMode: `"$DebugMode`" → $convertedDebugMode" -InvocationName "$( $MyInvocation.MyCommand.Name )"
+
+# Enable debug mode if DebugMode is set to $true
+if ($true -eq $convertedDebugMode)
+{
+    $Global:DebugPreference = 'Continue'     # module functions see this
+    $Env:TF_LOG = 'DEBUG'         # Terraform debug
+}
+else
+{
+    $Global:DebugPreference = 'SilentlyContinue'
+}
+
+try
+{
+    # Test pre-requisites are done
+    $whichOs = Assert-WhichOs -PassThru
+
+    if ("linux" -eq $whichOs.ToLower() -or "macos" -eq $whichOs.ToLower())
     {
-        throw "[$( $MyInvocation.MyCommand.Name )] Error: Both Terraform Plan and Terraform Plan Destroy cannot be true at the same time"
-        exit 1
+        Assert-HomebrewPath
+    }
+    elseif ("windows" -eq $whichOs.ToLower())
+    {
+        Assert-ChocoPath
+    }
+    else
+    {
+        throw "Unsupported OS: $whichOs"
     }
 
-    if ($ConvertedRunTerraformApply -eq $true -and $ConvertedRunTerraformDestroy -eq $true)
+    Get-InstalledPrograms -Programs @("Connect-AzAccount", "az", "terraform", "checkov")
+    Test-TenvExists
+
+    # Convert the string flags to Boolean and log the results at DEBUG level
+
+    $convertedAttemptAzureLogin = ConvertTo-Boolean $AttemptAzureLogin
+    _LogMessage -Level 'DEBUG' -Message "AttemptAzureLogin:   `"$AttemptAzureLogin`"   → $convertedAttemptAzureLogin"   -InvocationName $MyInvocation.MyCommand.Name
+
+    $convertedUseAzureClientSecretLogin = ConvertTo-Boolean $UseAzureClientSecretLogin
+    _LogMessage -Level 'DEBUG' -Message "UseAzureClientSecretLogin:   `"$UseAzureClientSecretLogin`"   → $convertedUseAzureClientSecretLogin"   -InvocationName $MyInvocation.MyCommand.Name
+
+    $convertedUseAzureOidcLogin = ConvertTo-Boolean $UseAzureOidcLogin
+    _LogMessage -Level 'DEBUG' -Message "UseAzureOidcLogin:           `"$UseAzureOidcLogin`"           → $convertedUseAzureOidcLogin"           -InvocationName $MyInvocation.MyCommand.Name
+
+    $convertedUseAzureUserLogin = ConvertTo-Boolean $UseAzureUserLogin
+    _LogMessage -Level 'DEBUG' -Message "UseAzureUserLogin:           `"$UseAzureUserLogin`"           → $convertedUseAzureUserLogin"           -InvocationName $MyInvocation.MyCommand.Name
+
+    $convertedUseAzureManagedIdentityLogin = ConvertTo-Boolean $UseAzureManagedIdentityLogin
+    _LogMessage -Level 'DEBUG' -Message "UseAzureManagedIdentityLogin: `"$UseAzureManagedIdentityLogin`" → $convertedUseAzureManagedIdentityLogin" -InvocationName $MyInvocation.MyCommand.Name
+
+    $convertedRunTerraformInit = ConvertTo-Boolean $RunTerraformInit
+    _LogMessage -Level 'DEBUG' -Message "RunTerraformInit: `"$RunTerraformInit`" → $convertedRunTerraformInit" -InvocationName "$( $MyInvocation.MyCommand.Name )"
+
+    $convertedRunTerraformPlan = ConvertTo-Boolean $RunTerraformPlan
+    _LogMessage -Level 'DEBUG' -Message "RunTerraformPlan: `"$RunTerraformPlan`" → $convertedRunTerraformPlan" -InvocationName "$( $MyInvocation.MyCommand.Name )"
+
+    $convertedRunTerraformPlanDestroy = ConvertTo-Boolean $RunTerraformPlanDestroy
+    _LogMessage -Level 'DEBUG' -Message "RunTerraformPlanDestroy: `"$RunTerraformPlanDestroy`" → $convertedRunTerraformPlanDestroy" -InvocationName "$( $MyInvocation.MyCommand.Name )"
+
+    $convertedRunTerraformApply = ConvertTo-Boolean $RunTerraformApply
+    _LogMessage -Level 'DEBUG' -Message "RunTerraformApply: `"$RunTerraformApply`" → $convertedRunTerraformApply" -InvocationName "$( $MyInvocation.MyCommand.Name )"
+
+    $convertedRunTerraformDestroy = ConvertTo-Boolean $RunTerraformDestroy
+    _LogMessage -Level 'DEBUG' -Message "RunTerraformDestroy: `"$RunTerraformDestroy`" → $convertedRunTerraformDestroy" -InvocationName "$( $MyInvocation.MyCommand.Name )"
+
+    $convertedDeletePlanFiles = ConvertTo-Boolean $DeletePlanFiles
+    _LogMessage -Level 'DEBUG' -Message "DeletePlanFiles: `"$DeletePlanFiles`" → $convertedDeletePlanFiles" -InvocationName "$( $MyInvocation.MyCommand.Name )"
+
+    $convertedRunCheckov = ConvertTo-Boolean $RunCheckov
+    _LogMessage -Level 'DEBUG' -Message "RunCheckov: `"$RunCheckov`" → $convertedRunCheckov" -InvocationName "$( $MyInvocation.MyCommand.Name )"
+
+    $convertedCheckovSoftfail = ConvertTo-Boolean $CheckovSoftfail
+    _LogMessage -Level 'DEBUG' -Message "CheckovSoftfail: `"$CheckovSoftfail`" → $convertedCheckovSoftfail" -InvocationName "$( $MyInvocation.MyCommand.Name )"
+
+
+    $convertedCreateTerraformWorkspace = ConvertTo-Boolean $CreateTerraformWorkspace
+    _LogMessage -Level 'DEBUG' -Message "CreateTerraformWorkspace: `"$CreateTerraformWorkspace`" → $convertedCreateTerraformWorkspace" -InvocationName "$( $MyInvocation.MyCommand.Name )"
+
+
+    # ── Chicken-and-egg / mutual exclusivity checks ───────────────────────────────
+    if (-not $convertedRunTerraformInit -and (
+    $convertedRunTerraformPlan -or
+            $convertedRunTerraformPlanDestroy -or
+            $convertedRunTerraformApply -or
+            $convertedRunTerraformDestroy))
     {
-        throw "[$( $MyInvocation.MyCommand.Name )] Error: Both Terraform Apply and Terraform Destroy cannot be true at the same time"
-        exit 1
+        $msg = 'Terraform init must be run before plan / apply / destroy operations.'
+        _LogMessage -Level 'ERROR' -Message $msg -InvocationName $MyInvocation.MyCommand.Name
+        throw $msg
     }
 
-    if ($ConvertedRunTerraformPlan -eq $false -and $ConvertedRunTerraformApply -eq $true)
+    if ($convertedRunTerraformPlan -and $convertedRunTerraformPlanDestroy)
     {
-        throw "[$( $MyInvocation.MyCommand.Name )] Error: You must run terraform plan and terraform apply together to use this script"
-        exit 1
+        $msg = 'Both Terraform Plan and Terraform Plan-Destroy cannot be true at the same time.'
+        _LogMessage -Level 'ERROR' -Message $msg -InvocationName $MyInvocation.MyCommand.Name
+        throw $msg
     }
 
-    if ($ConvertedRunTerraformPlanDestroy -eq $false -and $ConvertedRunTerraformDestroy -eq $true)
+    if ($convertedRunTerraformApply -and $convertedRunTerraformDestroy)
     {
-        throw "[$( $MyInvocation.MyCommand.Name )] Error: You must run terraform plan destroy and terraform destroy together to use this script"
-        exit 1
+        $msg = 'Both Terraform Apply and Terraform Destroy cannot be true at the same time.'
+        _LogMessage -Level 'ERROR' -Message $msg -InvocationName $MyInvocation.MyCommand.Name
+        throw $msg
     }
 
+    if (-not $convertedRunTerraformPlan -and $convertedRunTerraformApply)
+    {
+        $msg = 'You must run terraform **plan** together with **apply** when using this script.'
+        _LogMessage -Level 'ERROR' -Message $msg -InvocationName $MyInvocation.MyCommand.Name
+        throw $msg
+    }
+
+    if (-not $convertedRunTerraformPlanDestroy -and $convertedRunTerraformDestroy)
+    {
+        $msg = 'You must run terraform **plan destroy** together with **destroy** when using this script.'
+        _LogMessage -Level 'ERROR' -Message $msg -InvocationName $MyInvocation.MyCommand.Name
+        throw $msg
+    }
+
+    $processedStacks = @()
     try
     {
-        # Initial Terraform setup
-        Test-TenvExists
-        Test-TerraformExists
 
-        $WorkingDirectory = $TerraformCodePath
+        if ($convertedAttemptAzureLogin)
+        {
 
-        # Terraform Init
-        if ($ConvertedRunTerraformInit)
-        {
-            Invoke-TerraformInit `
-                -WorkingDirectory $WorkingDirectory `
-                -BackendStorageAccountName $BackendStorageAccountName `
-                -BackendStorageSubscriptionId $BackendStorageSubscriptionId
-            $InvokeTerraformInitSuccessful = ($LASTEXITCODE -eq 0)
-        }
-        else
-        {
-            throw "[$( $MyInvocation.MyCommand.Name )] Error: Terraform initialization failed."
+            Connect-AzureCli `
+            -UseClientSecret $convertedUseAzureClientSecretLogin `
+            -UseOidc $convertedUseAzureOidcLogin `
+            -UseUserDeviceCode $convertedUseAzureUserLogin `
+            -UseManagedIdentity $convertedUseAzureManagedIdentityLogin
         }
 
-        # Conditional execution based on parameters
-        if ($InvokeTerraformInitSuccessful -and $ConvertedRunTerraformPlan -and -not$ConvertedRunTerraformPlanDestroyonvRunTerraformPlanDestroy)
-        {
-            Invoke-TerraformPlan -WorkingDirectory $WorkingDirectory
-            $InvokeTerraformPlanSuccessful = ($LASTEXITCODE -eq 0)
+        $stackFolders = Get-TerraformStackFolders `
+                    -CodeRoot $fullTerraformCodePath `
+                    -StacksToRun $TerraformStackToRun
 
-            if ($ConvertedRunCheckov -and $InvokeTerraformPlanSuccessful)
+        # ──────────────────── REVERSE execution order for destroys ────────────────
+        if ($convertedRunTerraformPlanDestroy -or $convertedRunTerraformDestroy)
+        {
+
+            # 1. sort numerically by the leading digits in the folder name
+            $stackFolders = $stackFolders |
+                    Sort-Object {
+                        # “C:\...\1_network”  →  1
+                        [int](
+                        (($_ -split '[\\/]')[-1]) -replace '^(\d+)_.*', '$1'
+                        )
+                    }
+
+            # 2. reverse   (static .NET call – do **not** pipe this!)
+            [array]::Reverse($stackFolders)
+        }
+
+        foreach ($folder in $stackFolders)
+        {
+
+            $processedStacks += $folder
+
+            # terraform fmt – always safe
+            Invoke-TerraformFmtCheck  -CodePath $folder
+
+            # ── INIT ──────────────────────────────────────────────────────────────
+            if ($convertedRunTerraformInit)
             {
-                Run-Checkov -WorkingDirectory $WorkingDirectory
+                Invoke-TerraformInit -CodePath $folder -InitArgs '-input=false','-upgrade=true'
             }
-        }
 
-        if ($InvokeTerraformInitSuccessful -and $ConvertedRunTerraformPlanDestroy -and -not$ConvertedRunTerraformPlan)
-        {
-            Invoke-TerraformPlanDestroy -WorkingDirectory $WorkingDirectory
-            $InvokeTerraformPlanDestroySuccessful = ($LASTEXITCODE -eq 0)
-        }
-
-        if ($InvokeTerraformInitSuccessful -and $ConvertedRunTerraformApply -and $InvokeTerraformPlanSuccessful)
-        {
-            Invoke-TerraformApply
-            $InvokeTerraformApplySuccessful = ($LASTEXITCODE -eq 0)
-            if (-not$InvokeTerraformApplySuccessful)
+            # workspace (needs an init first)
+            if ($convertedRunTerraformInit -and
+                    $convertedCreateTerraformWorkspace -and
+                    -not [string]::IsNullOrWhiteSpace($TerraformWorkspace))
             {
-                throw "[$( $MyInvocation.MyCommand.Name )] Error: An error occured during terraform apply command"
-                exit 1
+
+                Invoke-TerraformWorkspaceSelect -CodePath $folder -WorkspaceName $TerraformWorkspace
             }
-        }
 
-        if ($ConvertedRunTerraformDestroy -and $InvokeTerraformPlanDestroySuccessful)
-        {
-            Invoke-TerraformDestroy
-            $InvokeTerraformDestroySuccessful = ($LASTEXITCODE -eq 0)
-
-            if (-not$InvokeTerraformDestroySuccessful)
+            # ── VALIDATE ──────────────────────────────────────────────────────────
+            if ($convertedRunTerraformInit)
             {
-                throw "[$( $MyInvocation.MyCommand.Name )] Error: An error occured during terraform destroy command"
-                exit 1
-            }
-        }
-        try {
-            # ── Terraform init ───────────────────────────────────────────────────────
-            if ($convertedRunTerraformInit) {
-                _LogMessage -Level 'INFO'  -Message 'Running terraform init…' -InvocationName $MyInvocation.MyCommand.Name
-
-                Invoke-TerraformInit `
-            -WorkingDirectory             $WorkingDirectory `
-            -BackendStorageAccountName    $BackendStorageAccountName `
-            -BackendStorageSubscriptionId $BackendStorageSubscriptionId
-
-                $invokeTerraformInitSuccessful = ($LASTEXITCODE -eq 0)
-                if (-not $invokeTerraformInitSuccessful) {
-                    _LogMessage -Level 'ERROR' -Message 'terraform init failed.' -InvocationName $MyInvocation.MyCommand.Name
-                    throw 'terraform init failed.'
-                }
-            }
-            else {
-                _LogMessage -Level 'ERROR' -Message 'Terraform init flag is false – cannot continue.' -InvocationName $MyInvocation.MyCommand.Name
-                throw 'Terraform initialisation was skipped.'
+                Invoke-TerraformValidate -CodePath $folder
             }
 
-            # ── Terraform plan ───────────────────────────────────────────────────────
-            if ($invokeTerraformInitSuccessful -and $convertedRunTerraformPlan -and -not $convertedRunTerraformPlanDestroy) {
-                _LogMessage -Level 'INFO' -Message 'Running terraform plan…' -InvocationName $MyInvocation.MyCommand.Name
+            # ── PLAN / PLAN-DESTROY ───────────────────────────────────────────────
+            if ($convertedRunTerraformPlan)
+            {
+                Invoke-TerraformPlan -CodePath $folder -PlanArgs $TerraformPlanExtraArgs -PlanFile $TerraformPlanFileName
+            }
+            elseif ($convertedRunTerraformPlanDestroy)
+            {
+                Invoke-TerraformPlanDestroy -CodePath $folder -PlanArgs $TerraformPlanDestroyExtraArgs -PlanFile $TerraformDestroyPlanFileName
+            }
 
-                Invoke-TerraformPlan -WorkingDirectory $WorkingDirectory
-                $invokeTerraformPlanSuccessful = ($LASTEXITCODE -eq 0)
+            # JSON + Checkov need a plan file
+            if ($convertedRunTerraformPlan -or $convertedRunTerraformPlanDestroy)
+            {
 
-                if (-not $invokeTerraformPlanSuccessful) {
-                    _LogMessage -Level 'ERROR' -Message 'terraform plan failed.' -InvocationName $MyInvocation.MyCommand.Name
-                    throw 'terraform plan failed.'
+                if ($convertedRunTerraformPlan)
+                {
+                    $TfPlanFileName = $TerraformPlanFileName
                 }
 
-                if ($convertedRunCheckov) {
-                    _LogMessage -Level 'INFO' -Message 'Running Checkov scan…' -InvocationName $MyInvocation.MyCommand.Name
-                    Invoke-Checkov -CodeLocation $WorkingDirectory
+                if ($convertedRunTerraformPlanDestroy)
+                {
+                    $TfPlanFileName = $TerraformDestroyPlanFileName
+                }
+
+                Convert-TerraformPlanToJson -CodePath $folder -PlanFile $TfPlanFileName
+
+                if ($convertedRunCheckov -and $convertedRunTerraformPlan)
+                {
+                    Invoke-Checkov `
+                -CodePath           $folder `
+                -CheckovSkipChecks  $CheckovSkipCheck `
+                -SoftFail:          $convertedCheckovSoftfail
                 }
             }
 
-            # ── Terraform plan destroy ───────────────────────────────────────────────
-            if ($invokeTerraformInitSuccessful -and $convertedRunTerraformPlanDestroy -and -not $convertedRunTerraformPlan) {
-                _LogMessage -Level 'INFO' -Message 'Running terraform plan destroy…' -InvocationName $MyInvocation.MyCommand.Name
-
-                Invoke-TerraformPlanDestroy -WorkingDirectory $WorkingDirectory
-                $invokeTerraformPlanDestroySuccessful = ($LASTEXITCODE -eq 0)
-
-                if (-not $invokeTerraformPlanDestroySuccessful) {
-                    _LogMessage -Level 'ERROR' -Message 'terraform plan destroy failed.' -InvocationName $MyInvocation.MyCommand.Name
-                    throw 'terraform plan destroy failed.'
-                }
+            # ── APPLY / DESTROY ───────────────────────────────────────────────────
+            if ($convertedRunTerraformApply)
+            {
+                Invoke-TerraformApply -CodePath $folder -SkipApprove -ApplyArgs $TerraformApplyExtraArgs
             }
-
-            # ── Terraform apply ──────────────────────────────────────────────────────
-            if ($invokeTerraformInitSuccessful -and $convertedRunTerraformApply -and $invokeTerraformPlanSuccessful) {
-                _LogMessage -Level 'INFO' -Message 'Running terraform apply…' -InvocationName $MyInvocation.MyCommand.Name
-
-                Invoke-TerraformApply
-                $invokeTerraformApplySuccessful = ($LASTEXITCODE -eq 0)
-
-                if (-not $invokeTerraformApplySuccessful) {
-                    _LogMessage -Level 'ERROR' -Message 'terraform apply failed.' -InvocationName $MyInvocation.MyCommand.Name
-                    throw 'terraform apply failed.'
-                }
+            elseif ($convertedRunTerraformDestroy)
+            {
+                Invoke-TerraformDestroy -CodePath $folder -SkipApprove -DestroyArgs $TerraformDestroyExtraArgs
             }
-
-            # ── Terraform destroy ────────────────────────────────────────────────────
-            if ($convertedRunTerraformDestroy -and $invokeTerraformPlanDestroySuccessful) {
-                _LogMessage -Level 'INFO' -Message 'Running terraform destroy…' -InvocationName $MyInvocation.MyCommand.Name
-
-                Invoke-TerraformDestroy
-                $invokeTerraformDestroySuccessful = ($LASTEXITCODE -eq 0)
-
-                if (-not $invokeTerraformDestroySuccessful) {
-                    _LogMessage -Level 'ERROR' -Message 'terraform destroy failed.' -InvocationName $MyInvocation.MyCommand.Name
-                    throw 'terraform destroy failed.'
-                }
-            }
-        }
-        catch {
-            _LogMessage -Level 'ERROR' -Message "Script execution error: $($_.Exception.Message)" -InvocationName $MyInvocation.MyCommand.Name
-            throw    # let the error propagate to any higher-level handler
         }
 
     }
     catch
     {
-        throw "[$( $MyInvocation.MyCommand.Name )] Error: in script execution: $_"
-        exit 1
+        _LogMessage -Level 'ERROR' -Message "Script execution error: $( $_.Exception.Message )" -InvocationName $MyInvocation.MyCommand.Name
+        throw
     }
-
 }
 catch
 {
-    throw "[$( $MyInvocation.MyCommand.Name )] Error: An error has occured in the script:  $_"
+    _LogMessage -Level "ERROR" -Message "Error: $( $_.Exception.Message )" -InvocationName "$( $MyInvocation.MyCommand.Name )"
     exit 1
 }
 
 finally
 {
-    if ($DeletePlanFiles -eq $true)
+    if ($convertedDeletePlanFiles)
     {
-        $planFile = "tfplan.plan"
-        if (Test-Path $planFile)
+
+        $patterns = @(
+            $TfPlanFileName,
+            "${TfPlanFileName}.json",
+            "${TfPlanFileName}-destroy.tfplan",
+            "${TfPlanFileName}-destroy.tfplan.json"
+        )
+
+        foreach ($folder in $processedStacks)
         {
-            Remove-Item -Path $planFile -Force -ErrorAction Stop
-            Write-Debug "[$( $MyInvocation.MyCommand.Name )] Debug: Deleted $planFile"
-        }
-        $planJson = "tfplan.json"
-        if (Test-Path $planJson)
-        {
-            Remove-Item -Path $planJson -Force -ErrorAction Stop
-            Write-Debug "[$( $MyInvocation.MyCommand.Name )] Debug: Deleted $planJson"
+            foreach ($pat in $patterns)
+            {
+
+                $file = Join-Path $folder $pat
+                if (Test-Path $file)
+                {
+                    try
+                    {
+                        Remove-Item $file -Force -ErrorAction Stop
+                        _LogMessage -Level DEBUG -Message "Deleted $file" `
+                                    -InvocationName $MyInvocation.MyCommand.Name
+                    }
+                    catch
+                    {
+                        _LogMessage -Level WARN -Message "Failed to delete $file – $( $_.Exception.Message )" `
+                                    -InvocationName $MyInvocation.MyCommand.Name
+                    }
+                }
+                else
+                {
+                    _LogMessage -Level DEBUG -Message "No file to delete: $file" `
+                                -InvocationName $MyInvocation.MyCommand.Name
+                }
+            }
         }
     }
-    Set-Location $CurrentWorkingDirectory
-}
+    else
+    {
+        _LogMessage -Level DEBUG -Message 'DeletePlanFiles is false – leaving plan files in place.' `
+                    -InvocationName $MyInvocation.MyCommand.Name
+    }
 
+    if ($convertedUseAzureUserLogin)
+    {
+        Disconnect-AzureCli -IsUserDeviceLogin $true
+    }
+    else
+    {
+        Disconnect-AzureCli -IsUserDeviceLogin $false
+    }
+
+    $Env:TF_LOG = $null
+    Set-Location $currentWorkingDirectory
+}
 

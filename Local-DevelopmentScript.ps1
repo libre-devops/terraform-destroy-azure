@@ -2,13 +2,20 @@ param (
     [string]$RunTerraformInit = "true",
     [string]$RunTerraformPlan = "true",
     [string]$RunTerraformPlanDestroy = "false",
-    [string]$RunTerraformApply = "false",
+    [string]$RunTerraformApply = "true",
     [string]$RunTerraformDestroy = "false",
+    [string[]]$TerraformPlanExtraArgs = $null,
+    [string[]]$TerraformPlanDestroyExtraArgs = $null,
+    [string[]]$TerraformApplyExtraArgs = $null,
+    [string[]]$TerraformDestroyExtraArgs = $null,
     [string]$DebugMode = "false",
     [string]$DeletePlanFiles = "true",
     [string]$TerraformVersion = "latest",
-    [string]$RunCheckov = "false",
-    [string]$TfPlanFileName = "tfplan.plan",
+    [string]$RunCheckov = "true",
+    [string]$CheckovSkipCheck = "CKV2_AZURE_31",
+    [string]$CheckovSoftfail = "true",
+    [string]$TerraformPlanFileName = "tfplan.plan",
+    [string]$TerraformDestroyPlanFileName = "tfplan-destroy.plan",
     [string]$TerraformCodeLocation = "terraform",
     [string[]]$TerraformStackToRun = @('all'),
     [string]$CreateTerraformWorkspace = "true",
@@ -28,7 +35,7 @@ $fullTerraformCodePath = Join-Path -Path $currentWorkingDirectory -ChildPath $Te
 $scriptDir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 
 # Import all required modules
-$modules = @("Logger", "Utils", "AzureCliLogin", "Terraform", "Storage", "Homebrew", "Checkov", "Tenv", "Choco")
+$modules = @("Logger", "Utils", "AzureCliLogin", "Terraform", "Homebrew", "Checkov", "Tenv", "Choco", "TerraformDocs")
 foreach ($module in $modules)
 {
     $modulePath = Join-Path -Path $scriptDir -ChildPath "PowerShellModules/$module.psm1"
@@ -119,6 +126,10 @@ try
     $convertedRunCheckov = ConvertTo-Boolean $RunCheckov
     _LogMessage -Level 'DEBUG' -Message "RunCheckov: `"$RunCheckov`" → $convertedRunCheckov" -InvocationName "$( $MyInvocation.MyCommand.Name )"
 
+    $convertedCheckovSoftfail = ConvertTo-Boolean $CheckovSoftfail
+    _LogMessage -Level 'DEBUG' -Message "CheckovSoftfail: `"$CheckovSoftfail`" → $convertedCheckovSoftfail" -InvocationName "$( $MyInvocation.MyCommand.Name )"
+
+
     $convertedCreateTerraformWorkspace = ConvertTo-Boolean $CreateTerraformWorkspace
     _LogMessage -Level 'DEBUG' -Message "CreateTerraformWorkspace: `"$CreateTerraformWorkspace`" → $convertedCreateTerraformWorkspace" -InvocationName "$( $MyInvocation.MyCommand.Name )"
 
@@ -162,6 +173,8 @@ try
         _LogMessage -Level 'ERROR' -Message $msg -InvocationName $MyInvocation.MyCommand.Name
         throw $msg
     }
+
+    $processedStacks = @()
     try
     {
 
@@ -179,17 +192,98 @@ try
                     -CodeRoot $fullTerraformCodePath `
                     -StacksToRun $TerraformStackToRun
 
+        # ──────────────────── REVERSE execution order for destroys ────────────────
+        if ($convertedRunTerraformPlanDestroy -or $convertedRunTerraformDestroy)
+        {
+
+            # 1. sort numerically by the leading digits in the folder name
+            $stackFolders = $stackFolders |
+                    Sort-Object {
+                        # “C:\...\1_network”  →  1
+                        [int](
+                        (($_ -split '[\\/]')[-1]) -replace '^(\d+)_.*', '$1'
+                        )
+                    }
+
+            # 2. reverse   (static .NET call – do **not** pipe this!)
+            [array]::Reverse($stackFolders)
+        }
+
         foreach ($folder in $stackFolders)
         {
-            # Example: validate + fmt-check for each stack
+
+            $processedStacks += $folder
+
+            # terraform fmt – always safe
             Invoke-TerraformFmtCheck  -CodePath $folder
-            Invoke-TerraformInit -CodePath $folder
-            if ($convertedCreateTerraformWorkspace -and -not [string]::IsNullOrWhiteSpace($TerraformWorkspace))
+
+            # ── INIT ──────────────────────────────────────────────────────────────
+            if ($convertedRunTerraformInit)
             {
+                Invoke-TerraformInit -CodePath $folder -InitArgs '-input=false','-upgrade=true'
+            }
+
+            # workspace (needs an init first)
+            if ($convertedRunTerraformInit -and
+                    $convertedCreateTerraformWorkspace -and
+                    -not [string]::IsNullOrWhiteSpace($TerraformWorkspace))
+            {
+
                 Invoke-TerraformWorkspaceSelect -CodePath $folder -WorkspaceName $TerraformWorkspace
             }
-            Invoke-TerraformValidate -CodePath $folder
+
+            # ── VALIDATE ──────────────────────────────────────────────────────────
+            if ($convertedRunTerraformInit)
+            {
+                Invoke-TerraformValidate -CodePath $folder
+            }
+
+            # ── PLAN / PLAN-DESTROY ───────────────────────────────────────────────
+            if ($convertedRunTerraformPlan)
+            {
+                Invoke-TerraformPlan -CodePath $folder -PlanArgs $TerraformPlanExtraArgs -PlanFile $TerraformPlanFileName
+            }
+            elseif ($convertedRunTerraformPlanDestroy)
+            {
+                Invoke-TerraformPlanDestroy -CodePath $folder -PlanArgs $TerraformPlanDestroyExtraArgs -PlanFile $TerraformDestroyPlanFileName
+            }
+
+            # JSON + Checkov need a plan file
+            if ($convertedRunTerraformPlan -or $convertedRunTerraformPlanDestroy)
+            {
+
+                if ($convertedRunTerraformPlan)
+                {
+                    $TfPlanFileName = $TerraformPlanFileName
+                }
+
+                if ($convertedRunTerraformPlanDestroy)
+                {
+                    $TfPlanFileName = $TerraformDestroyPlanFileName
+                }
+
+                Convert-TerraformPlanToJson -CodePath $folder -PlanFile $TfPlanFileName
+
+                if ($convertedRunCheckov -and $convertedRunTerraformPlan)
+                {
+                    Invoke-Checkov `
+                -CodePath           $folder `
+                -CheckovSkipChecks  $CheckovSkipCheck `
+                -SoftFail:          $convertedCheckovSoftfail
+                }
+            }
+
+            # ── APPLY / DESTROY ───────────────────────────────────────────────────
+            if ($convertedRunTerraformApply)
+            {
+                Invoke-TerraformApply -CodePath $folder -SkipApprove -ApplyArgs $TerraformApplyExtraArgs
+            }
+            elseif ($convertedRunTerraformDestroy)
+            {
+                Invoke-TerraformDestroy -CodePath $folder -SkipApprove -DestroyArgs $TerraformDestroyExtraArgs
+            }
         }
+
     }
     catch
     {
@@ -207,30 +301,48 @@ finally
 {
     if ($convertedDeletePlanFiles)
     {
-        foreach ($file in $TfPlanFileName, "${TfPlanFileName}.json")
+
+        $patterns = @(
+            $TfPlanFileName,
+            "${TfPlanFileName}.json",
+            "${TfPlanFileName}-destroy.tfplan",
+            "${TfPlanFileName}-destroy.tfplan.json"
+        )
+
+        foreach ($folder in $processedStacks)
         {
-            if (Test-Path $file)
+            foreach ($pat in $patterns)
             {
-                try
+
+                $file = Join-Path $folder $pat
+                if (Test-Path $file)
                 {
-                    Remove-Item -Path $file -Force -ErrorAction Stop
-                    _LogMessage -Level 'DEBUG' -Message "Deleted $file" -InvocationName "$( $MyInvocation.MyCommand.Name )"
+                    try
+                    {
+                        Remove-Item $file -Force -ErrorAction Stop
+                        _LogMessage -Level DEBUG -Message "Deleted $file" `
+                                    -InvocationName $MyInvocation.MyCommand.Name
+                    }
+                    catch
+                    {
+                        _LogMessage -Level WARN -Message "Failed to delete $file – $( $_.Exception.Message )" `
+                                    -InvocationName $MyInvocation.MyCommand.Name
+                    }
                 }
-                catch
+                else
                 {
-                    _LogMessage -Level 'WARN' -Message "Failed to delete $file – $( $_.Exception.Message )" -InvocationName "$( $MyInvocation.MyCommand.Name )"
+                    _LogMessage -Level DEBUG -Message "No file to delete: $file" `
+                                -InvocationName $MyInvocation.MyCommand.Name
                 }
-            }
-            else
-            {
-                _LogMessage -Level 'DEBUG' -Message "File not present, nothing to delete: $file" -InvocationName "$( $MyInvocation.MyCommand.Name )"
             }
         }
     }
     else
     {
-        _LogMessage -Level 'DEBUG' -Message 'DeletePlanFiles is false – leaving plan files in place.' -InvocationName "$( $MyInvocation.MyCommand.Name )"
+        _LogMessage -Level DEBUG -Message 'DeletePlanFiles is false – leaving plan files in place.' `
+                    -InvocationName $MyInvocation.MyCommand.Name
     }
+
     if ($convertedUseAzureUserLogin)
     {
         Disconnect-AzureCli -IsUserDeviceLogin $true

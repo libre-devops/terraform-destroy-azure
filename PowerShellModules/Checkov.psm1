@@ -1,57 +1,73 @@
-function Invoke-Checkov {
+function Invoke-Checkov
+{
     [CmdletBinding()]
-    param (
-        [string]$PlanJsonFile = 'tfplan.json',
+    param(
+        [Parameter(Mandatory)][string] $CodePath,
+        [string]  $PlanJsonFile = 'tfplan.plan.json',
 
-        [Parameter(Mandatory)]
-        [string]$CodeLocation,
+        [string]  $CheckovSkipChecks = '',
+        [switch]  $SoftFail,
 
-        [string]$CheckovSkipChecks = ''
+    # NEW – just like -InitArgs in your Terraform helper:
+        [string[]]$ExtraArgs = @()      # any additional CLI flags
     )
 
-    # ── 1  Locate Checkov ────────────────────────────────────────────────────────
-    try {
-        $checkovPath = Get-Command checkov -ErrorAction Stop
-        _LogMessage -Level 'INFO' -Message "Checkov found at: $($checkovPath.Source) – running scan..." -InvocationName "$($MyInvocation.MyCommand.Name)"
+    #── find the JSON plan ─────────────────────────────────────────────────
+    $planPath = Join-Path $CodePath $PlanJsonFile
+    if (-not (Test-Path $planPath))
+    {
+        _LogMessage -Level 'ERROR' -Message "JSON plan not found: $planPath" `
+                    -InvocationName $MyInvocation.MyCommand.Name
+        throw "JSON plan not found: $planPath"
     }
-    catch {
-        _LogMessage -Level 'ERROR' -Message 'Checkov is not installed or not in PATH.' -InvocationName "$($MyInvocation.MyCommand.Name)"
-        throw 'Checkov is not installed or not in PATH.'
-    }
 
-    # ── 2  Build --skip-check argument (if any) ──────────────────────────────────
-    $skipArgument = @()           # default = nothing to skip
-    $trimmed      = $CheckovSkipChecks.Trim()
-
-    # treat '', "" or an empty string as "no skips"
-    if ($trimmed -and $trimmed -ne "''" -and $trimmed -ne '""') {
-        $checks = ($trimmed -split ',') |
-                ForEach-Object { $_.Trim() } |
-                Where-Object  { $_ }
-
-        if ($checks.Count) {
-            $formattedList = ($checks | ForEach-Object { " - $_" }) -join "`n"
-            _LogMessage -Level 'INFO' -Message "The following tests are being skipped:`n$formattedList" -InvocationName "$($MyInvocation.MyCommand.Name)"
-            $skipArgument = @('--skip-check', ($checks -join ','))
-        }
-        else {
-            _LogMessage -Level 'INFO' -Message 'No tests are being skipped.' -InvocationName "$($MyInvocation.MyCommand.Name)"
+    #── build --skip-check … if supplied ──────────────────────────────────
+    $skipArgument = @()
+    if ( $CheckovSkipChecks.Trim())
+    {
+        $list = ($CheckovSkipChecks -split ',') |
+                ForEach-Object { $_.Trim() } | Where-Object { $_ }
+        if ($list)
+        {
+            $skipArgument = @('--skip-check', ($list -join ','))
         }
     }
-    else {
-        _LogMessage -Level 'INFO' -Message 'No tests are being skipped.' -InvocationName "$($MyInvocation.MyCommand.Name)"
-    }
 
-    # ── 3  Compose full argument list & run Checkov ──────────────────────────────
+    #── base Checkov arguments ─────────────────────────────────────────────
     $checkovArgs = @(
-        '-s'
-        '-f' , $PlanJsonFile
-        '--repo-root-for-plan-enrichment', $CodeLocation
-    ) + $skipArgument
+        '-s'                                         # short output
+        '-f', $planPath
+        '--repo-root-for-plan-enrichment', $CodePath
+        '--download-external-modules', 'false'
+    ) + $skipArgument + $ExtraArgs
 
-    _LogMessage -Level 'INFO' -Message "Executing Checkov with args: $($checkovArgs -join ' ')" -InvocationName "$($MyInvocation.MyCommand.Name)"
+    if ($SoftFail)
+    {
+        $checkovArgs += '--soft-fail'
+    }
+
+    _LogMessage -Level 'INFO' -Message "Executing Checkov: checkov $( $checkovArgs -join ' ' )" `
+                -InvocationName $MyInvocation.MyCommand.Name
 
     & checkov @checkovArgs
+    $code = $LASTEXITCODE
+
+    if ($code -eq 0)
+    {
+        _LogMessage -Level 'INFO' -Message 'Checkov completed with no failed checks.' `
+                    -InvocationName $MyInvocation.MyCommand.Name
+    }
+    elseif ($SoftFail)
+    {
+        _LogMessage -Level 'WARN' -Message "Checkov found issues (exit $code) – continuing because -SoftFail." `
+                    -InvocationName $MyInvocation.MyCommand.Name
+    }
+    else
+    {
+        _LogMessage -Level 'ERROR' -Message "Checkov reported failures (exit $code)." `
+                    -InvocationName $MyInvocation.MyCommand.Name
+        throw "Checkov failed (exit $code)."
+    }
 }
 
 Export-ModuleMember -Function Invoke-Checkov
