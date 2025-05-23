@@ -1,0 +1,191 @@
+# azure-pipeline.yml
+# Reusable Terraform pipeline template leveraging Run-AzTerraform.ps1 and LibreDevOpsHelpers
+
+parameters:
+  - name: TerraformCodeLocation
+    type: string
+    default: 'terraform'
+    displayName: 'Path to Terraform code'
+  - name: TerraformStackToRun
+    type: object
+    default: ['all']
+    displayName: 'Stacks to run'
+  - name: TerraformWorkspace
+    type: string
+    default: 'dev'
+    displayName: 'Terraform workspace'
+  - name: RunTerraformInit
+    type: string
+    values:
+      - "true"
+      - "false"
+    default: true
+    displayName: 'Run terraform init'
+  - name: RunTerraformPlan
+    type: string
+    values:
+      - "true"
+      - "false"
+    default: true
+    displayName: 'Run terraform plan'
+  - name: RunTerraformPlanDestroy
+    type: string
+    values:
+      - "true"
+      - "false"
+    default: true
+    displayName: 'Run terraform plan -destroy'
+  - name: RunTerraformApply
+    type: string
+    values:
+      - "true"
+      - "false"
+    default: true
+    displayName: 'Run terraform apply'
+  - name: RunTerraformDestroy
+    type: string
+    values:
+      - "true"
+      - "false"
+    default: true
+    displayName: 'Run terraform destroy'
+  - name: TerraformPlanExtraArgs
+    type: object
+    default: []
+    displayName: 'Extra args for terraform plan'
+  - name: TerraformPlanDestroyExtraArgs
+    type: object
+    default: []
+    displayName: 'Extra args for terraform plan -destroy'
+  - name: TerraformApplyExtraArgs
+    type: object
+    default: []
+    displayName: 'Extra args for terraform apply'
+  - name: TerraformDestroyExtraArgs
+    type: object
+    default: []
+    displayName: 'Extra args for terraform destroy'
+  - name: DebugMode
+    type: string
+    values:
+      - "true"
+      - "false"
+    default: true
+    displayName: 'Enable debug logging'
+  - name: DeletePlanFiles
+    type: string
+    values:
+      - "true"
+      - "false"
+    default: true
+    displayName: 'Cleanup plan files after run'
+  - name: TerraformVersion
+    type: string
+    default: 'latest'
+    displayName: 'Terraform version'
+  - name: RunCheckov
+    type: string
+    values:
+      - "true"
+      - "false"
+    default: true
+    displayName: 'Run Checkov scan'
+  - name: CheckovSkipCheck
+    type: string
+    default: 'CKV2_AZURE_31'
+    displayName: 'Comma-separated Checkov skip IDs'
+  - name: CheckovSoftfail
+    type: string
+    values:
+      - "true"
+      - "false"
+    default: true
+    displayName: 'Soft-fail Checkov'
+  - name: TerraformPlanFileName
+    type: string
+    default: 'tfplan.plan'
+    displayName: 'Plan file name'
+  - name: TerraformDestroyPlanFileName
+    type: string
+    default: 'tfplan-destroy.plan'
+    displayName: 'Destroy plan file name'
+  - name: CreateTerraformWorkspace
+    type: boolean
+    default: true
+    displayName: 'Create/select Terraform workspace'
+  - name: UseAzureClientSecretLogin
+    type: boolean
+    default: true
+    displayName: 'Use Azure client-secret login'
+  - name: UseAzureOidcLogin
+    type: boolean
+    default: false
+    displayName: 'Use Azure OIDC login'
+  - name: UseAzureUserLogin
+    type: boolean
+    default: false
+    displayName: 'Use Azure user-device login'
+  - name: UseAzureManagedIdentityLogin
+    type: boolean
+    default: false
+    displayName: 'Use Azure managed identity login'
+  - name: AzureServiceConnection
+    type: string
+    default: ''
+    displayName: 'Azure DevOps service connection name'
+
+stages:
+  - stage: Terraform
+    displayName: 'Terraform: init/plan/apply/destroy'
+    jobs:
+      - job: RunTerraform
+        pool:
+          vmImage: 'windows-latest'
+        steps:
+          - checkout: self
+
+          - task: UseDotNet@2
+            displayName: 'Ensure PowerShell 7+ is available'
+            inputs:
+              packageType: 'sdk'
+              version: '7.x'
+              installationPath: $(Agent.ToolsDirectory)/dotnet
+
+          - task: PowerShell@2
+            name: RunAzTerraform
+            displayName: 'Run Terraform orchestration'
+            inputs:
+              pwsh: true
+              failOnStderr: true
+              script: |
+                # Install module if not present
+                if (-not (Get-Module -ListAvailable -Name LibreDevOpsHelpers)) {
+                  Install-Module -Name LibreDevOpsHelpers -Scope CurrentUser -Force
+                }
+                . "$(Build.SourcesDirectory)\Run-AzTerraform.ps1" `
+                  -TerraformCodeLocation   ${{ parameters.TerraformCodeLocation }} `
+                  -TerraformStackToRun     $([string]::Join(',', ${{ parameters.TerraformStackToRun }})) `
+                  -TerraformWorkspace      ${{ parameters.TerraformWorkspace }} `
+                  -RunTerraformInit        ${{ parameters.RunTerraformInit }} `
+                  -RunTerraformPlan        ${{ parameters.RunTerraformPlan }} `
+                  -RunTerraformPlanDestroy ${{ parameters.RunTerraformPlanDestroy }} `
+                  -RunTerraformApply       ${{ parameters.RunTerraformApply }} `
+                  -RunTerraformDestroy     ${{ parameters.RunTerraformDestroy }} `
+                  -TerraformPlanExtraArgs       ${{ parameters.TerraformPlanExtraArgs }} `
+                  -TerraformPlanDestroyExtraArgs ${{ parameters.TerraformPlanDestroyExtraArgs }} `
+                  -TerraformApplyExtraArgs       ${{ parameters.TerraformApplyExtraArgs }} `
+                  -TerraformDestroyExtraArgs     ${{ parameters.TerraformDestroyExtraArgs }} `
+                  -DebugMode               ${{ parameters.DebugMode }} `
+                  -DeletePlanFiles         ${{ parameters.DeletePlanFiles }} `
+                  -TerraformVersion        ${{ parameters.TerraformVersion }} `
+                  -RunCheckov              ${{ parameters.RunCheckov }} `
+                  -CheckovSkipCheck        ${{ parameters.CheckovSkipCheck }} `
+                  -CheckovSoftfail         ${{ parameters.CheckovSoftfail }} `
+                  -TerraformPlanFileName   ${{ parameters.TerraformPlanFileName }} `
+                  -TerraformDestroyPlanFileName ${{ parameters.TerraformDestroyPlanFileName }} `
+                  -CreateTerraformWorkspace ${{ parameters.CreateTerraformWorkspace }} `
+                  -UseAzureClientSecretLogin ${{ parameters.UseAzureClientSecretLogin }} `
+                  -UseAzureOidcLogin        ${{ parameters.UseAzureOidcLogin }} `
+                  -UseAzureUserLogin        ${{ parameters.UseAzureUserLogin }} `
+                  -UseAzureManagedIdentityLogin ${{ parameters.UseAzureManagedIdentityLogin }} `
+                  -AzureServiceConnection    '${{ parameters.AzureServiceConnection }}'

@@ -52,7 +52,7 @@ function New-Password
     )
 
     # Helper function to generate a random sequence from the alphabet
-    function Generate-RandomSequence
+    function New-RandomSequence
     {
         param (
             [int] $length,
@@ -205,4 +205,12 @@ function Assert-WhichOs
 
 
 # Export functions
-Export-ModuleMember -Function Test-PathExists, Get-InstalledPrograms, New-Password, Test-EnvironmentVariablesExist, ConvertTo-Boolean, Convert-AzureResourceId, Assert-WhichOs
+Export-ModuleMember -Function `
+    Test-PathExists, `
+     Get-InstalledPrograms, `
+     New-RandomSequence, `
+     New-Password, `
+     Test-EnvironmentVariablesExist, `
+     ConvertTo-Boolean, `
+     Convert-AzureResourceId, `
+     Assert-WhichOs

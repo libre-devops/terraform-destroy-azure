@@ -1,3 +1,51 @@
+function Invoke-InstallCheckov
+{
+    [CmdletBinding()]
+    param()
+
+    $inv = $MyInvocation.MyCommand.Name
+    $os = Assert-WhichOs -PassThru
+
+    if ($os.toLower() -eq 'windows')
+    {
+        # on Windows, install via pip (or pip3/pipx if you prefer)
+        _LogMessage -Level INFO -Message "Installing Checkov via pip on Windows…" -InvocationName $inv
+
+        if (Get-Command pipx -ErrorAction SilentlyContinue)
+        {
+            pipx install checkov
+        }
+        elseif (Get-Command pip3 -ErrorAction SilentlyContinue)
+        {
+            pip3 install --upgrade checkov
+        }
+        elseif (Get-Command pip -ErrorAction SilentlyContinue)
+        {
+            pip install --upgrade checkov
+        }
+        else
+        {
+            _LogMessage -Level ERROR -Message "No pip/pip3/pipx found; cannot install Checkov." -InvocationName $inv
+            throw "Cannot install Checkov: pip/pip3/pipx missing."
+        }
+    }
+    elseif ($os.toLower() -eq 'linux' -or 'macos')
+    {
+        # on *nix, use Homebrew
+        Assert-HomebrewPath
+        _LogMessage -Level INFO -Message "Installing Checkov via Homebrew…" -InvocationName $inv
+        brew install checkov
+    }
+    else
+    {
+        _LogMessage -Level ERROR -Message "Unsupported OS for Checkov install: $os" -InvocationName $inv
+        throw "Unsupported OS: $os"
+    }
+
+    # verify
+    Get-InstalledPrograms -Programs @('checkov')
+}
+
 function Invoke-Checkov
 {
     [CmdletBinding()]
@@ -70,4 +118,6 @@ function Invoke-Checkov
     }
 }
 
-Export-ModuleMember -Function Invoke-Checkov
+Export-ModuleMember -Function `
+    Invoke-Checkov, `
+     Invoke-InstallCheckov

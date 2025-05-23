@@ -159,5 +159,5 @@ function Invoke-PesterTests
 ###############################################################################
 Export-ModuleMember -Function `
     ShouldReturnZeroExitCode, `
-     ShouldMatchCommandOutput, `
-     Invoke-PesterTests
+      ShouldMatchCommandOutput, `
+      Invoke-PesterTests

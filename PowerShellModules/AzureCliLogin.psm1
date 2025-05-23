@@ -1,3 +1,26 @@
+function Invoke-InstallAzureCli
+{
+    [CmdletBinding()]
+    param()
+    $inv = $MyInvocation.MyCommand.Name
+    $os = Assert-WhichOs -PassThru
+
+    if ($os.ToLower() -eq 'windows')
+    {
+        Assert-ChocoPath
+        _LogMessage -Level INFO -Message "Installing Azure CLI via Chocolatey…" -InvocationName $inv
+        choco install azure-cli -y
+    }
+    else
+    {
+        Assert-HomebrewPath
+        _LogMessage -Level INFO -Message "Installing Azure CLI via Homebrew…" -InvocationName $inv
+        brew install azure-cli
+    }
+
+    Get-InstalledPrograms -Programs @('az')
+}
+
 function Connect-ToAzureCliClientSecret
 {
     param(
@@ -222,7 +245,7 @@ function Connect-AzureCli
     }
     else
     {
-    # Managed Identity
+        # Managed Identity
 
         Test-EnvironmentVariablesExist -EnvVars @('ARM_SUBSCRIPTION_ID')
 
@@ -270,12 +293,13 @@ function Disconnect-AzureCli
 
 # Export functions
 Export-ModuleMember -Function `
-    Connect-ToAzureCliOidc, `
-     Test-AzureCliConnection, `
-     Connect-ToAzureCliClientSecret, `
-     Connect-ToAzureCliManagedIdentity, `
-     Connect-ToAzureCliDeviceCode, `
-     Connect-AzureCli, `
-     Disconnect-AzureCli
+    Invoke-InstallAzureCli, `
+      Connect-ToAzureCliOidc, `
+      Test-AzureCliConnection, `
+      Connect-ToAzureCliClientSecret, `
+      Connect-ToAzureCliManagedIdentity, `
+      Connect-ToAzureCliDeviceCode, `
+      Connect-AzureCli, `
+      Disconnect-AzureCli
 
 

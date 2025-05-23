@@ -220,9 +220,9 @@ function Update-ReadmeWithTerraformDocs
 #############################################################################
 Export-ModuleMember -Function `
     Format-Terraform, `
-     Format-TerraformCode, `
-     Read-TerraformFile, `
-     Write-TerraformFile, `
-     Format-TerraformVariables, `
-     Format-TerraformOutputs, `
-     Update-ReadmeWithTerraformDocs
+      Format-TerraformCode, `
+      Read-TerraformFile, `
+      Write-TerraformFile, `
+      Format-TerraformVariables, `
+      Format-TerraformOutputs, `
+      Update-ReadmeWithTerraformDocs

@@ -2,15 +2,17 @@ param (
     [string]$RunTerraformInit = "true",
     [string]$RunTerraformPlan = "true",
     [string]$RunTerraformPlanDestroy = "false",
-    [string]$RunTerraformApply = "true",
+    [string]$RunTerraformApply = "false",
     [string]$RunTerraformDestroy = "false",
     [string[]]$TerraformPlanExtraArgs = $null,
     [string[]]$TerraformPlanDestroyExtraArgs = $null,
     [string[]]$TerraformApplyExtraArgs = $null,
     [string[]]$TerraformDestroyExtraArgs = $null,
+    [string]$InstallTenvTerraform = "true",
+    [string]$TerraformVersion        = "latest",
     [string]$DebugMode = "false",
     [string]$DeletePlanFiles = "true",
-    [string]$TerraformVersion = "latest",
+    [string]$InstallCheckov = "false",
     [string]$RunCheckov = "true",
     [string]$CheckovSkipCheck = "CKV2_AZURE_31",
     [string]$CheckovSoftfail = "true",
@@ -20,6 +22,7 @@ param (
     [string[]]$TerraformStackToRun = @('all'),
     [string]$CreateTerraformWorkspace = "true",
     [string]$TerraformWorkspace = "dev",
+    [string]$InstallAzureCli = "false",
     [string]$AttemptAzureLogin = "true",
     [string]$UseAzureClientSecretLogin = "true",
     [string]$UseAzureOidcLogin = "false",
@@ -69,26 +72,22 @@ else
 
 try
 {
-    # Test pre-requisites are done
-    $whichOs = Assert-WhichOs -PassThru
 
-    if ("linux" -eq $whichOs.ToLower() -or "macos" -eq $whichOs.ToLower())
+    $convertedInstallTenvTerraform = ConvertTo-Boolean $InstallTenvTerraform
+    _LogMessage -Level 'DEBUG' -Message "InstallTenvTerraform   `"$InstallTenvTerraform`"   → $convertedInstallTenvTerraform"  -InvocationName $MyInvocation.MyCommand.Name
+
+    if ($convertedInstallTenvTerraform)
     {
-        Assert-HomebrewPath
-    }
-    elseif ("windows" -eq $whichOs.ToLower())
-    {
-        Assert-ChocoPath
-    }
-    else
-    {
-        throw "Unsupported OS: $whichOs"
+        Invoke-InstallTenv
+        Test-TenvExists
+        Invoke-TenvTfInstall -TerraformVersion $TerraformVersion
     }
 
-    Get-InstalledPrograms -Programs @("Connect-AzAccount", "az", "terraform", "checkov")
-    Test-TenvExists
+    Get-InstalledPrograms -Programs @("terraform")
 
     # Convert the string flags to Boolean and log the results at DEBUG level
+    $convertedInstallAzureCli = ConvertTo-Boolean $InstallAzureCli
+    _LogMessage -Level 'DEBUG' -Message "InstallAzureCli:   `"$InstallAzureCli`"   → $convertedInstallAzureCli"   -InvocationName $MyInvocation.MyCommand.Name
 
     $convertedAttemptAzureLogin = ConvertTo-Boolean $AttemptAzureLogin
     _LogMessage -Level 'DEBUG' -Message "AttemptAzureLogin:   `"$AttemptAzureLogin`"   → $convertedAttemptAzureLogin"   -InvocationName $MyInvocation.MyCommand.Name
@@ -123,12 +122,14 @@ try
     $convertedDeletePlanFiles = ConvertTo-Boolean $DeletePlanFiles
     _LogMessage -Level 'DEBUG' -Message "DeletePlanFiles: `"$DeletePlanFiles`" → $convertedDeletePlanFiles" -InvocationName "$( $MyInvocation.MyCommand.Name )"
 
+    $convertedInstallCheckov = ConvertTo-Boolean $InstallCheckov
+    _LogMessage -Level 'DEBUG' -Message "InstallCheckov: `"$InstallCheckov`" → $convertedRunCheckov" -InvocationName "$( $MyInvocation.MyCommand.Name )"
+
     $convertedRunCheckov = ConvertTo-Boolean $RunCheckov
     _LogMessage -Level 'DEBUG' -Message "RunCheckov: `"$RunCheckov`" → $convertedRunCheckov" -InvocationName "$( $MyInvocation.MyCommand.Name )"
 
     $convertedCheckovSoftfail = ConvertTo-Boolean $CheckovSoftfail
     _LogMessage -Level 'DEBUG' -Message "CheckovSoftfail: `"$CheckovSoftfail`" → $convertedCheckovSoftfail" -InvocationName "$( $MyInvocation.MyCommand.Name )"
-
 
     $convertedCreateTerraformWorkspace = ConvertTo-Boolean $CreateTerraformWorkspace
     _LogMessage -Level 'DEBUG' -Message "CreateTerraformWorkspace: `"$CreateTerraformWorkspace`" → $convertedCreateTerraformWorkspace" -InvocationName "$( $MyInvocation.MyCommand.Name )"
@@ -177,9 +178,23 @@ try
     $processedStacks = @()
     try
     {
+        if ($convertedInstallAzureCli -and $convertedAttemptAzureLogin)
+        {
+            _LogMessage -Level 'INFO' -Message "Installing Azure CLI…" -InvocationName $MyInvocation.MyCommand.Name
+
+            Invoke-InstallAzureCli
+        }
+
+        if ($convertedInstallCheckov -and $convertedRunCheckov)
+        {
+            _LogMessage -Level 'INFO' -Message "Installing Checkov…" -InvocationName $MyInvocation.MyCommand.Name
+
+            Invoke-InstallCheckov
+        }
 
         if ($convertedAttemptAzureLogin)
         {
+            Get-InstalledPrograms -Programs @("az")
 
             Connect-AzureCli `
             -UseClientSecret $convertedUseAzureClientSecretLogin `
