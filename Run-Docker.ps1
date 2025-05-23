@@ -1,4 +1,4 @@
-<#
+=<#
 .SYNOPSIS
     Automate Docker build & optional push to a registry.
 
@@ -37,17 +37,17 @@
 #>
 
 param (
-    [string]   $DockerFileName    = "Dockerfile",
-    [string]   $DockerImageName   = "base-images/azdo-agent-containers",
-    [string]   $RegistryUrl       = "ghcr.io",
-    [string]   $RegistryUsername,
-    [string]   $RegistryPassword,
-    [string]   $ImageOrg,
-    [string]   $WorkingDirectory  = (Get-Location).Path,
-    [string]   $BuildContext      = (Get-Location).Path,
-    [string]   $DebugMode         = "false",
-    [string]   $PushDockerImage   = "true",
-    [string[]] $AdditionalTags    = @("latest", (Get-Date -Format "yyyy-MM"))
+[string]   $DockerFileName    = "Dockerfile",
+[string]   $DockerImageName   = "base-images/azdo-agent-containers",
+[string]   $RegistryUrl       = "ghcr.io",
+[string]   $RegistryUsername,
+[string]   $RegistryPassword,
+[string]   $ImageOrg,
+[string]   $WorkingDirectory  = (Get-Location).Path,
+[string]   $BuildContext      = (Get-Location).Path,
+[string]   $DebugMode         = "false",
+[string]   $PushDockerImage   = "true",
+[string[]] $AdditionalTags    = @("latest", (Get-Date -Format "yyyy-MM"))
 )
 
 function Convert-ToBoolean {
@@ -98,7 +98,6 @@ function Push-DockerImage {
 
     Write-Host "🔐 Logging in to $RegistryUrl"
     $RegistryPassword | docker login $RegistryUrl -u $RegistryUsername --password-stdin
-
     if ($LASTEXITCODE -ne 0) {
         Write-Error "docker login failed (exit $LASTEXITCODE)"; return $false
     }
@@ -116,36 +115,39 @@ function Push-DockerImage {
     return $true
 }
 
-#— Main —#
+### Main
 
+# switch to working folder
 Set-Location $WorkingDirectory
 
-# Derive full image name
+# build full image name
 if (-not $ImageOrg) { $ImageOrg = $RegistryUsername }
 $DockerImageName = "{0}/{1}/{2}" -f $RegistryUrl, $ImageOrg, $DockerImageName
 
-# Convert booleans
+# convert booleans
 $DebugMode       = Convert-ToBoolean $DebugMode
 $PushDockerImage = Convert-ToBoolean $PushDockerImage
 if ($DebugMode) { $DebugPreference = "Continue" }
 
-# Run build
+# build
 Check-DockerExists
 if (-not (Build-DockerImage -ContextPath $BuildContext -DockerFile $DockerFileName)) {
     Write-Error "Build failed"; exit 1
 }
 
-# Tag extras
+# tag extras
 foreach ($tag in $AdditionalTags) {
     $fullTag = "{0}:{1}" -f $DockerImageName, $tag
     Write-Host "🏷 Tagging: $fullTag"
     docker tag $DockerImageName $fullTag
 }
 
-# Optionally push
+# push if requested
 if ($PushDockerImage) {
     $tagsToPush = $AdditionalTags | ForEach-Object { "{0}:{1}" -f $DockerImageName, $_ }
-    Push-DockerImage -FullTagNames $tagsToPush
+    if (-not (Push-DockerImage -FullTagNames $tagsToPush)) {
+        Write-Error "Push failed"; exit 1
+    }
 }
 
 Write-Host "✅ All done." -ForegroundColor Green
