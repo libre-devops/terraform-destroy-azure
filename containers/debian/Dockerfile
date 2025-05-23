@@ -46,6 +46,7 @@ RUN useradd -ms /bin/bash ${NORMAL_USER} && \
     software-properties-common \
     libsqlite3-dev \
     libssl-dev \
+    lsb-release \
     unzip \
     wget \
     zip \
