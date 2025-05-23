@@ -1,4 +1,4 @@
-name: 'Run Docker - Windows Server Core 2025'
+name: 'Run Docker - Windows Server Core 2022'
 
 # Allow run manually
 on:
