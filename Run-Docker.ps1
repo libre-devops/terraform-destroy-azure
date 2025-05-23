@@ -1,4 +1,4 @@
-=<#
+<#
 .SYNOPSIS
     Automate Docker build & optional push to a registry.
 
@@ -37,17 +37,17 @@
 #>
 
 param (
-[string]   $DockerFileName    = "Dockerfile",
-[string]   $DockerImageName   = "base-images/azdo-agent-containers",
-[string]   $RegistryUrl       = "ghcr.io",
-[string]   $RegistryUsername,
-[string]   $RegistryPassword,
-[string]   $ImageOrg,
-[string]   $WorkingDirectory  = (Get-Location).Path,
-[string]   $BuildContext      = (Get-Location).Path,
-[string]   $DebugMode         = "false",
-[string]   $PushDockerImage   = "true",
-[string[]] $AdditionalTags    = @("latest", (Get-Date -Format "yyyy-MM"))
+    [string]   $DockerFileName    = "Dockerfile",
+    [string]   $DockerImageName   = "base-images/azdo-agent-containers",
+    [string]   $RegistryUrl       = "ghcr.io",
+    [string]   $RegistryUsername,
+    [string]   $RegistryPassword,
+    [string]   $ImageOrg,
+    [string]   $WorkingDirectory  = (Get-Location).Path,
+    [string]   $BuildContext      = (Get-Location).Path,
+    [string]   $DebugMode         = "false",
+    [string]   $PushDockerImage   = "true",
+    [string[]] $AdditionalTags    = @("latest", (Get-Date -Format "yyyy-MM"))
 )
 
 function Convert-ToBoolean {
