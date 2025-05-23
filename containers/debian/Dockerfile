@@ -1,4 +1,4 @@
-FROM debian:slim-stable
+FROM debian:stable-slim
 
 LABEL org.opencontainers.image.title=debian
 LABEL org.opencontainers.image.source=https://github.com/libre-devops/terraform-azure-azdo-pipeline-templates
