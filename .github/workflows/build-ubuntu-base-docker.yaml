@@ -57,7 +57,7 @@ jobs:
           }
           else
           {
-            $workingDirectory = ${{ inputs.working_directory }}
+            $workingDirectory = "${{ inputs.working_directory }}"
           }
           
           .\Run-Docker.ps1 `
