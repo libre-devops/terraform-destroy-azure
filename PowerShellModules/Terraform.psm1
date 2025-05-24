@@ -157,12 +157,12 @@ function Invoke-TerraformInit
         _LogMessage -Level 'INFO'  -Message "Running *terraform init ${InitArgs} * in: $CodePath" -InvocationName $inv
         Set-Location $CodePath
 
-        if ($CreateBackendKey -and $StackFolderName)
-        {
-            $normalized = $StackFolderName -replace '_', '-'
-            $backendArg = "-backend-config=key=${normalized}.terraform.tfstate"
-            _LogMessage -Level 'DEBUG' -Message "Appending backend key arg: $backendArg" -InvocationName $inv
-            $InitArgs += $backendArg
+        if ($CreateBackendKey -and $PSBoundParameters.ContainsKey('StackFolderName')) {
+            $folderName = Split-Path -Path $StackFolderName -Leaf
+            $backendKey = $folderName -replace '_', '-' + ".terraform.tfstate"
+            _LogMessage -Level 'DEBUG' -Message "Computed backend key name: $backendKey" -InvocationName $MyInvocation.MyCommand.Name
+
+            $InitArgs += "-backend-config=key=$backendKey"
         }
 
         & terraform init @InitArgs

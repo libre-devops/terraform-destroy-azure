@@ -11,7 +11,5 @@ terraform {
       source = "hashicorp/random"
     }
   }
-  backend "azurerm" {
-    key                  = "lbd-uks-prd-1-network.terraform.tfstate"
-  }
+  backend "azurerm" {}
 }
