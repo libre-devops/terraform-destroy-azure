@@ -137,7 +137,10 @@ function Invoke-TerraformInit
         [Parameter(Mandatory)][string]$CodePath,
 
     # Optional additional arguments, e.g. "-backend-config=xyz.tfbackend"
-        [string[]]$InitArgs = @()
+        [string[]]$InitArgs = @(),
+        [bool]$CreateBackendKey = $false,
+        [string]$StackFolderName = $null
+
     )
 
     $inv = $MyInvocation.MyCommand.Name
@@ -153,6 +156,14 @@ function Invoke-TerraformInit
 
         _LogMessage -Level 'INFO'  -Message "Running *terraform init ${InitArgs} * in: $CodePath" -InvocationName $inv
         Set-Location $CodePath
+
+        if ($CreateBackendKey -and $StackFolderName)
+        {
+            $normalized = $StackFolderName -replace '_', '-'
+            $backendArg = "-backend-config=key=${normalized}.terraform.tfstate"
+            _LogMessage -Level 'DEBUG' -Message "Appending backend key arg: $backendArg" -InvocationName $inv
+            $InitArgs += $backendArg
+        }
 
         & terraform init @InitArgs
         $code = $LASTEXITCODE
@@ -450,13 +461,13 @@ function Convert-TerraformPlanToJson
 ###############################################################################
 Export-ModuleMember -Function `
     Invoke-TerraformValidate, `
-       Invoke-TerraformFmtCheck, `
-       Get-TerraformStackFolders, `
-       Invoke-TerraformInit, `
-       Invoke-TerraformWorkspaceSelect, `
-       Invoke-TerraformPlan, `
-       Invoke-TerraformPlanDestroy, `
-       Invoke-TerraformApply, `
-       Invoke-TerraformDestroy, `
-       Convert-TerraformPlanToJson
+         Invoke-TerraformFmtCheck, `
+         Get-TerraformStackFolders, `
+         Invoke-TerraformInit, `
+         Invoke-TerraformWorkspaceSelect, `
+         Invoke-TerraformPlan, `
+         Invoke-TerraformPlanDestroy, `
+         Invoke-TerraformApply, `
+         Invoke-TerraformDestroy, `
+         Convert-TerraformPlanToJson
 

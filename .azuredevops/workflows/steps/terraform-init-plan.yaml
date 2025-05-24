@@ -26,7 +26,6 @@ parameters:
       - '["all"]'
     displayName: 'Terraform Stacks to Run'
 
-
   - name: CreateTerraformWorkspace
     type: string
     values: [ "true", "false" ]
@@ -73,6 +72,12 @@ parameters:
     default: "false"
     displayName: "Debug mode enabled"
 
+  - name: TerraformInitCreateBackendStateFileName
+    type: string
+    values: [ "true", "false" ]
+    default: "true"
+    displayName: 'Whether the script should attempt to make a state file based on stack name'
+
   - name: TerraformInitExtraArgsJson
     type: string
     default: >
@@ -83,7 +88,6 @@ parameters:
         "-backend-config=container_name=$(TF_VAR_ARM_BACKEND_CONTAINER_NAME)"
       ]
     displayName: 'Extra Args for terraform init'
-
 
   - name: TerraformPlanExtraArgsJson
     type: string
@@ -107,6 +111,7 @@ steps:
   - template: .azuredevops/templates/steps/terraform-init-plan.yaml@githubTemplates  # path in the external repo
     parameters:
       TerraformCodeLocation: ${{ parameters.TerraformCodeLocation }}
+      TerraformInitCreateBackendStateFileName: ${{ parameters.TerraformInitCreateBackendStateFileName }}
       TerraformInitExtraArgsJson: ${{ parameters.TerraformInitExtraArgsJson }}
       TerraformPlanExtraArgsJson: ${{ parameters.TerraformPlanExtraArgsJson }}
       TerraformStackToRunJson: ${{ parameters.TerraformStackToRunJson }}

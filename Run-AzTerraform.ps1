@@ -5,6 +5,7 @@ param (
     [string]$RunTerraformApply = "false",
     [string]$RunTerraformDestroy = "false",
     [string]$TerraformInitExtraArgsJson = '[]',
+    [string]$TerraformInitCreateBackendStateFileName = "false",
     [string]$TerraformPlanExtraArgsJson = '[]',
     [string]$TerraformPlanDestroyExtraArgsJson = '[]',
     [string]$TerraformApplyExtraArgsJson = '[]',
@@ -124,6 +125,9 @@ try
 
     $convertedRunTerraformInit = ConvertTo-Boolean $RunTerraformInit
     _LogMessage -Level 'DEBUG' -Message "RunTerraformInit: `"$RunTerraformInit`" → $convertedRunTerraformInit" -InvocationName "$( $MyInvocation.MyCommand.Name )"
+
+    $convertedTerraformInitCreateBackendStateFileName = ConvertTo-Boolean $TerraformInitCreateBackendStateFileName
+    _LogMessage -Level 'DEBUG' -Message "TerraformInitCreateBackendStateFileName: `"$TerraformInitCreateBackendStateFileName`" → $convertedTerraformInitCreateBackendStateFileName" -InvocationName "$( $MyInvocation.MyCommand.Name )"
 
     $convertedRunTerraformPlan = ConvertTo-Boolean $RunTerraformPlan
     _LogMessage -Level 'DEBUG' -Message "RunTerraformPlan: `"$RunTerraformPlan`" → $convertedRunTerraformPlan" -InvocationName "$( $MyInvocation.MyCommand.Name )"
@@ -259,7 +263,11 @@ try
             Invoke-TerraformFmtCheck  -CodePath $folder
 
             # ── INIT ──────────────────────────────────────────────────────────────
-            if ($convertedRunTerraformInit)
+            if ($convertedRunTerraformInit -and $convertedTerraformInitCreateBackendStateFileName)
+            {
+                Invoke-TerraformInit -CodePath $folder -InitArgs $TerraformInitExtraArgs -CreateBackendKey $convertedTerraformInitCreateBackendStateFileName -StackFolderName $folder
+            }
+            else
             {
                 Invoke-TerraformInit -CodePath $folder -InitArgs $TerraformInitExtraArgs
             }
