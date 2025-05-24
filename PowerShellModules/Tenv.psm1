@@ -39,7 +39,8 @@ function Test-TenvExists
 function Invoke-TenvTfInstall {
     [CmdletBinding()]
     param(
-        [string]$TerraformVersion = 'latest'
+        [string]$TerraformVersion = 'latest',
+        [string[]]$TenvArgs = @()
     )
 
     $inv = $MyInvocation.MyCommand.Name
@@ -71,8 +72,8 @@ function Invoke-TenvTfInstall {
         }
         elseif ($TerraformVersion -eq 'latest') {
             _LogMessage -Level INFO -Message "Installing latest Terraform via tenv…" -InvocationName $inv
-            tenv tf install latest --verbose
-            tenv tf use     latest --verbose
+            tenv tf install latest $TenvArgs
+            tenv tf use     latest $TenvArgs
         }
         else {  # must be 'latest-1'
             _LogMessage -Level INFO -Message "Installing previous minor Terraform release via tenv…" -InvocationName $inv
@@ -95,8 +96,8 @@ function Invoke-TenvTfInstall {
             }
 
             _LogMessage -Level INFO -Message "Installing Terraform version $previous." -InvocationName $inv
-            tenv tf install $previous --verbose
-            tenv tf use     $previous --verbose
+            tenv tf install $previous $TenvArgs
+            tenv tf use     $previous $TenvArgs
         }
     }
     catch {
