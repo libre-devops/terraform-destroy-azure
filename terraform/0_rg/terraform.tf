@@ -12,5 +12,7 @@ terraform {
     }
   }
   backend "azurerm" {
+    key                  = "lbd-uks-prd-0-rg.terraform.tfstate"
+
   }
 }
