@@ -159,7 +159,7 @@ function Invoke-TerraformInit
 
         if ($CreateBackendKey -and $PSBoundParameters.ContainsKey('StackFolderName')) {
             $folderName = Split-Path -Path $StackFolderName -Leaf
-            $backendKey = $folderName -replace '_', '-' + ".terraform.tfstate"
+            $backendKey = ($folderName -replace '_', '-') + ".terraform.tfstate"
             _LogMessage -Level 'DEBUG' -Message "Computed backend key name: $backendKey" -InvocationName $MyInvocation.MyCommand.Name
 
             $InitArgs += "-backend-config=key=$backendKey"
