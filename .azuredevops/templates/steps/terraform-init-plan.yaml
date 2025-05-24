@@ -6,7 +6,8 @@ parameters:
 
   - name: TerraformStackToRun
     type: object
-    default: [ all ]
+    default:
+      - all
     displayName: 'Terraform Stacks to Run'
 
   - name: TerraformWorkspace
