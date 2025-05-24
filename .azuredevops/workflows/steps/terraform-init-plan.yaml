@@ -82,7 +82,7 @@ steps:
   - template: .azuredevops/templates/steps/terraform-init-plan.yaml@githubTemplates  # path in the external repo
     parameters:
       TerraformCodeLocation: ${{ parameters.TerraformCodeLocation }}
-      TerraformStackToRun: ${{ parameters.TerraformStackToRun }}
+      TerraformStackToRun: '${{ convertToJson(parameters.TerraformStackToRun) }}'
       UseAzureOidcLogin: ${{ parameters.UseAzureOidcLogin }}
       UseAzureManagedIdentityLogin: ${{ parameters.UseAzureManagedIdentityLogin }}
       UseAzureClientSecretLogin: ${{ parameters.UseAzureClientSecretLogin }}
