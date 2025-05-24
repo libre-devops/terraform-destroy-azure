@@ -154,7 +154,6 @@ function Invoke-TerraformInit
             throw "Terraform code not found: $CodePath"
         }
 
-        _LogMessage -Level 'INFO'  -Message "Running *terraform init ${InitArgs} * in: $CodePath" -InvocationName $inv
         Set-Location $CodePath
 
         if ($CreateBackendKey -and $PSBoundParameters.ContainsKey('StackFolderName')) {
@@ -164,6 +163,8 @@ function Invoke-TerraformInit
 
             $InitArgs += "-backend-config=key=$backendKey"
         }
+
+        _LogMessage -Level 'INFO'  -Message "Running *terraform init ${InitArgs} * in: $CodePath" -InvocationName $inv
 
         & terraform init @InitArgs
         $code = $LASTEXITCODE
