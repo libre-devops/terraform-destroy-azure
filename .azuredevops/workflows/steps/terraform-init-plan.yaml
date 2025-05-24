@@ -16,7 +16,7 @@ parameters:
     default: 'terraform'
     displayName: 'Terraform Code Directory Path'
 
-  - name: TerraformStackToRunJson
+  - name: TerraformStackToRun
     type: string
     default: '["rg"]'
     values:
@@ -86,7 +86,7 @@ steps:
   - template: .azuredevops/templates/steps/terraform-init-plan.yaml@githubTemplates  # path in the external repo
     parameters:
       TerraformCodeLocation: ${{ parameters.TerraformCodeLocation }}
-      TerraformStackToRunJson: ${{ parameters.TerraformStackToRunJson }}
+      TerraformStackToRun: ${{ parameters.TerraformStackToRun }}
       UseAzureOidcLogin: ${{ parameters.UseAzureOidcLogin }}
       UseAzureManagedIdentityLogin: ${{ parameters.UseAzureManagedIdentityLogin }}
       UseAzureClientSecretLogin: ${{ parameters.UseAzureClientSecretLogin }}

@@ -2,28 +2,32 @@ param (
     [string]$RunTerraformInit = "true",
     [string]$RunTerraformPlan = "true",
     [string]$RunTerraformPlanDestroy = "false",
-    [string]$RunTerraformApply = "true",
+    [string]$RunTerraformApply = "false",
     [string]$RunTerraformDestroy = "false",
     [string[]]$TerraformPlanExtraArgs = $null,
     [string[]]$TerraformPlanDestroyExtraArgs = $null,
     [string[]]$TerraformApplyExtraArgs = $null,
     [string[]]$TerraformDestroyExtraArgs = $null,
+    [string]$InstallTenvTerraform = "true",
+    [string]$TerraformVersion        = "latest",
     [string]$DebugMode = "false",
     [string]$DeletePlanFiles = "true",
-    [string]$TerraformVersion = "latest",
+    [string]$InstallCheckov = "false",
     [string]$RunCheckov = "true",
     [string]$CheckovSkipCheck = "CKV2_AZURE_31",
     [string]$CheckovSoftfail = "true",
     [string]$TerraformPlanFileName = "tfplan.plan",
     [string]$TerraformDestroyPlanFileName = "tfplan-destroy.plan",
     [string]$TerraformCodeLocation = "terraform",
-    [string[]]$TerraformStackToRun = @('all'),
+    [string]$TerraformStackToRunJson = '["rg"]', # JSON typeUse 'all' to run 0_, 1_, etc and destroy in reverse order 1_, 0_ etc
     [string]$CreateTerraformWorkspace = "true",
     [string]$TerraformWorkspace = "dev",
+    [string]$InstallAzureCli = "false",
+    [string]$UseAzureServiceConnection = "false",
     [string]$AttemptAzureLogin = "true",
-    [string]$UseAzureClientSecretLogin = "true",
+    [string]$UseAzureClientSecretLogin = "false",
     [string]$UseAzureOidcLogin = "false",
-    [string]$UseAzureUserLogin = "false",
+    [string]$UseAzureUserLogin = "true",
     [string]$UseAzureManagedIdentityLogin = "false"
 )
 
@@ -69,26 +73,36 @@ else
 
 try
 {
-    # Test pre-requisites are done
-    $whichOs = Assert-WhichOs -PassThru
 
-    if ("linux" -eq $whichOs.ToLower() -or "macos" -eq $whichOs.ToLower())
-    {
-        Assert-HomebrewPath
-    }
-    elseif ("windows" -eq $whichOs.ToLower())
-    {
-        Assert-ChocoPath
-    }
-    else
-    {
-        throw "Unsupported OS: $whichOs"
+    $TerraformStackToRun = @()
+    try {
+        $TerraformStackToRun = $TerraformStackToRunJson | ConvertFrom-Json
+        if (-not ($TerraformStackToRun -is [System.Collections.IEnumerable])) {
+            throw "Parsed value is not an array."
+        }
+    } catch {
+        _LogMessage -Level 'ERROR' -Message "Invalid JSON provided in TerraformStackToRunJson: $_" -InvocationName $MyInvocation.MyCommand.Name
+        exit 1
     }
 
-    Get-InstalledPrograms -Programs @("Connect-AzAccount", "az", "terraform", "checkov")
-    Test-TenvExists
+    $convertedInstallTenvTerraform = ConvertTo-Boolean $InstallTenvTerraform
+    _LogMessage -Level 'DEBUG' -Message "InstallTenvTerraform   `"$InstallTenvTerraform`"   → $convertedInstallTenvTerraform"  -InvocationName $MyInvocation.MyCommand.Name
+
+    if ($convertedInstallTenvTerraform)
+    {
+        Invoke-InstallTenv
+        Test-TenvExists
+        Invoke-TenvTfInstall -TerraformVersion $TerraformVersion
+    }
+
+    Get-InstalledPrograms -Programs @("terraform")
+
+    $convertedUseAzureServiceConnection = ConvertTo-Boolean $UseAzureServiceConnection
+    _LogMessage -Level 'DEBUG' -Message "UseAzureServiceConnection:   `"$UseAzureServiceConnection`"   → $convertedUseAzureServiceConnection"  -InvocationName $MyInvocation.MyCommand.Name
 
     # Convert the string flags to Boolean and log the results at DEBUG level
+    $convertedInstallAzureCli = ConvertTo-Boolean $InstallAzureCli
+    _LogMessage -Level 'DEBUG' -Message "InstallAzureCli:   `"$InstallAzureCli`"   → $convertedInstallAzureCli"   -InvocationName $MyInvocation.MyCommand.Name
 
     $convertedAttemptAzureLogin = ConvertTo-Boolean $AttemptAzureLogin
     _LogMessage -Level 'DEBUG' -Message "AttemptAzureLogin:   `"$AttemptAzureLogin`"   → $convertedAttemptAzureLogin"   -InvocationName $MyInvocation.MyCommand.Name
@@ -123,18 +137,27 @@ try
     $convertedDeletePlanFiles = ConvertTo-Boolean $DeletePlanFiles
     _LogMessage -Level 'DEBUG' -Message "DeletePlanFiles: `"$DeletePlanFiles`" → $convertedDeletePlanFiles" -InvocationName "$( $MyInvocation.MyCommand.Name )"
 
+    $convertedInstallCheckov = ConvertTo-Boolean $InstallCheckov
+    _LogMessage -Level 'DEBUG' -Message "InstallCheckov: `"$InstallCheckov`" → $convertedRunCheckov" -InvocationName "$( $MyInvocation.MyCommand.Name )"
+
     $convertedRunCheckov = ConvertTo-Boolean $RunCheckov
     _LogMessage -Level 'DEBUG' -Message "RunCheckov: `"$RunCheckov`" → $convertedRunCheckov" -InvocationName "$( $MyInvocation.MyCommand.Name )"
 
     $convertedCheckovSoftfail = ConvertTo-Boolean $CheckovSoftfail
     _LogMessage -Level 'DEBUG' -Message "CheckovSoftfail: `"$CheckovSoftfail`" → $convertedCheckovSoftfail" -InvocationName "$( $MyInvocation.MyCommand.Name )"
 
-
     $convertedCreateTerraformWorkspace = ConvertTo-Boolean $CreateTerraformWorkspace
     _LogMessage -Level 'DEBUG' -Message "CreateTerraformWorkspace: `"$CreateTerraformWorkspace`" → $convertedCreateTerraformWorkspace" -InvocationName "$( $MyInvocation.MyCommand.Name )"
 
+    if ($convertedAttemptAzureLogin -and $convertedUseAzureServiceConnection)
+    {
+        $msg = "This script doesn't support the use of both authentication mechanism. Setting AzureCliLogin to false because of this."
+        _LogMessage -Level 'WARN' -Message $msg -InvocationName $MyInvocation.MyCommand.Name
+        $convertedAttemptAzureLogin = $false
+    }
 
     # ── Chicken-and-egg / mutual exclusivity checks ───────────────────────────────
+
     if (-not $convertedRunTerraformInit -and (
     $convertedRunTerraformPlan -or
             $convertedRunTerraformPlanDestroy -or
@@ -174,12 +197,27 @@ try
         throw $msg
     }
 
+
     $processedStacks = @()
     try
     {
+        if ($convertedInstallAzureCli -and $convertedAttemptAzureLogin)
+        {
+            _LogMessage -Level 'INFO' -Message "Installing Azure CLI…" -InvocationName $MyInvocation.MyCommand.Name
+
+            Invoke-InstallAzureCli
+        }
+
+        if ($convertedInstallCheckov -and $convertedRunCheckov)
+        {
+            _LogMessage -Level 'INFO' -Message "Installing Checkov…" -InvocationName $MyInvocation.MyCommand.Name
+
+            Invoke-InstallCheckov
+        }
 
         if ($convertedAttemptAzureLogin)
         {
+            Get-InstalledPrograms -Programs @("az")
 
             Connect-AzureCli `
             -UseClientSecret $convertedUseAzureClientSecretLogin `
@@ -220,7 +258,7 @@ try
             # ── INIT ──────────────────────────────────────────────────────────────
             if ($convertedRunTerraformInit)
             {
-                Invoke-TerraformInit -CodePath $folder -InitArgs '-input=false','-upgrade=true'
+                Invoke-TerraformInit -CodePath $folder -InitArgs $TerraformInitExtraArgs
             }
 
             # workspace (needs an init first)
