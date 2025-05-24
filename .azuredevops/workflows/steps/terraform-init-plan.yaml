@@ -71,6 +71,23 @@ parameters:
     default: "true"
     displayName: "Debug mode enabled"
 
+  - name: TerraformInitExtraArgs
+    type: string
+    default: >
+      [
+        "-backend-config=subscription_id=$(TF_VAR_ARM_BACKEND_SUBSCRIPTION_ID)",
+        "-backend-config=resource_group_name=$(TF_VAR_ARM_BACKEND_STORAGE_RG_NAME)",
+        "-backend-config=storage_account_name=$(TF_VAR_ARM_BACKEND_STORAGE_ACCOUNT)",
+        "-backend-config=container_name=$(TF_VAR_ARM_BACKEND_CONTAINER_NAME)"
+      ]
+    displayName: 'Extra Args for terraform init'
+
+
+  - name: TerraformPlanExtraArgs
+    type: string
+    default: '[ ]'
+    displayName: 'Extra Args for terraform plan'
+
 resources:
   repositories:
     - repository: githubTemplates
@@ -81,16 +98,19 @@ resources:
 
 pool: 'Default'
 
+variables:
+  - group: terraform-${{ parameters.TerraformWorkspace }}-vars
 
 steps:
   - template: .azuredevops/templates/steps/terraform-init-plan.yaml@githubTemplates  # path in the external repo
     parameters:
       TerraformCodeLocation: ${{ parameters.TerraformCodeLocation }}
+      TerraformInitExtraArgs: ${{ parameters.TerraformInitExtraArgs }}
+      TerraformPlanExtraArgs: ${{ parameters.TerraformPlanExtraArgs }}
       TerraformStackToRun: ${{ parameters.TerraformStackToRun }}
       UseAzureOidcLogin: ${{ parameters.UseAzureOidcLogin }}
       UseAzureManagedIdentityLogin: ${{ parameters.UseAzureManagedIdentityLogin }}
       UseAzureClientSecretLogin: ${{ parameters.UseAzureClientSecretLogin }}
-      CreateTerraformWorkspace: ${{ parameters.CreateTerraformWorkspace }}
       TerraformWorkspace: ${{ parameters.TerraformWorkspace }}
       CheckovSkipCheck: ${{ parameters.CheckovSkipCheck }}
       DebugMode: ${{ parameters.DebugMode }}

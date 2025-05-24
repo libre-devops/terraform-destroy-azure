@@ -44,6 +44,11 @@ parameters:
     default: "false"
     displayName: 'Run Terraform Destroy'
 
+  - name: TerraformInitExtraArgs
+    type: string
+    default: '[ ]'
+    displayName: 'Extra Args for terraform init'
+
   - name: TerraformPlanExtraArgs
     type: string
     default: '[ ]'
@@ -245,6 +250,7 @@ steps:
         -RunTerraformPlanDestroy         ${{ parameters.RunTerraformPlanDestroy }} `
         -RunTerraformApply               ${{ parameters.RunTerraformApply }} `
         -RunTerraformDestroy             ${{ parameters.RunTerraformDestroy }} `
+        -TerraformInitExtraArgs          ${{ parameters.TerraformInitExtraArgs }} `
         -TerraformPlanExtraArgs          ${{ parameters.TerraformPlanExtraArgs }} `
         -TerraformPlanDestroyExtraArgs   ${{ parameters.TerraformPlanDestroyExtraArgs }} `
         -TerraformApplyExtraArgs         ${{ parameters.TerraformApplyExtraArgs }} `

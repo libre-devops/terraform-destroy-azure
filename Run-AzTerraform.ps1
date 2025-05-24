@@ -4,6 +4,7 @@ param (
     [string]$RunTerraformPlanDestroy = "false",
     [string]$RunTerraformApply = "false",
     [string]$RunTerraformDestroy = "false",
+    [string[]]$TerraformInitExtraArgs = $null,
     [string[]]$TerraformPlanExtraArgs = $null,
     [string[]]$TerraformPlanDestroyExtraArgs = $null,
     [string[]]$TerraformApplyExtraArgs = $null,
