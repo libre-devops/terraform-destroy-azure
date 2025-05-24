@@ -18,7 +18,7 @@ parameters:
 
   - name: TerraformStackToRun
     type: string
-    default: [ 'all' ]
+    default: '["all"]'
     displayName: 'Terraform Stacks to Run'
 
   - name: CreateTerraformWorkspace
