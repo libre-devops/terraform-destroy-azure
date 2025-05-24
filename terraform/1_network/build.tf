@@ -1,7 +1,7 @@
 locals {
-  vnet_name       = "vnet-${var.short}-${var.loc}-${terraform.workspace}-01"
+  vnet_name       = "vnet-${var.short}-${var.loc}-${terraform.workspace}-03"
   dev_subnet_name = "DevSubnet"
-  nsg_name        = "nsg-${var.short}-${var.loc}-${terraform.workspace}-01"
+  nsg_name        = "nsg-${var.short}-${var.loc}-${terraform.workspace}-03"
 }
 
 module "shared_vars" {

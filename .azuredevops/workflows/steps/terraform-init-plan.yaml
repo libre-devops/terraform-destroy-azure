@@ -96,7 +96,7 @@ resources:
       ref: main
       endpoint: libredevops
 
-pool: 'Default'
+pool: 'vmss-libd-uks-dev-02'
 
 variables:
   - group: terraform-${{ parameters.TerraformWorkspace }}-vars

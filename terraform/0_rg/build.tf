@@ -1,5 +1,5 @@
 locals {
-  rg_name = "rg-${var.short}-${var.loc}-${terraform.workspace}-01"
+  rg_name = "rg-${var.short}-${var.loc}-${terraform.workspace}-03"
 }
 
 module "rg" {
