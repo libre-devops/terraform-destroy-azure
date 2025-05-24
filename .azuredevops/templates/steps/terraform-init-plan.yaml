@@ -45,23 +45,23 @@ parameters:
     displayName: 'Run Terraform Destroy'
 
   - name: TerraformPlanExtraArgs
-    type: object
-    default: [ ]
+    type: string
+    default: '[ ]'
     displayName: 'Extra Args for terraform plan'
 
   - name: TerraformPlanDestroyExtraArgs
-    type: object
-    default: [ ]
+    type: string
+    default: '[ ]'
     displayName: 'Extra Args for terraform plan -destroy'
 
   - name: TerraformApplyExtraArgs
-    type: object
-    default: [ ]
+    type: string
+    default: '[ ]'
     displayName: 'Extra Args for terraform apply'
 
   - name: TerraformDestroyExtraArgs
-    type: object
-    default: [ ]
+    type: string
+    default: '[ ]'
     displayName: 'Extra Args for terraform destroy'
 
   - name: DebugMode
