@@ -270,31 +270,29 @@ steps:
     name: RunAzTerraform
     displayName: 'Run Terraform orchestration'
     env:
-      env:
-        ${{ if eq(parameters.UseAzureServiceConnection, 'true') }}:
+      ${{ if eq(parameters.UseAzureServiceConnection, 'true') }}:
+        # Always required with service connection
+        ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+        ARM_TENANT_ID: $(ARM_TENANT_ID)
+        ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+        ARM_USE_AZUREAD: $(ARM_USE_AZUREAD)
 
-          # Always required with service connection
-          ARM_CLIENT_ID: $(ARM_CLIENT_ID)
-          ARM_TENANT_ID: $(ARM_TENANT_ID)
-          ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
-          ARM_USE_AZUREAD: $(ARM_USE_AZUREAD)
+        # Only if using OIDC
+        ${{ if eq(parameters.UseAzureOidcLogin, 'true') }}:
+          ARM_USE_OIDC: true
+          ARM_OIDC_TOKEN: $(ARM_OIDC_TOKEN)
 
-          # Only if using OIDC
-          ${{ if eq(parameters.UseAzureOidcLogin, 'true') }}:
-            ARM_USE_OIDC: true
-            ARM_OIDC_TOKEN: $(ARM_OIDC_TOKEN)
+        # Only if using client secret auth
+        ${{ if eq(parameters.UseAzureManagedIdentityLogin, 'true') }}:
+          ARM_USE_MSI: true
 
-          # Only if using client secret auth
-          ${{ if eq(parameters.UseAzureManagedIdentityLogin, 'true') }}:
-            ARM_USE_MSI: true
+        # Only if using client secret auth
+        ${{ if eq(parameters.UseAzureClientSecretLogin, 'true') }}:
+          ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
 
-          # Only if using client secret auth
-          ${{ if eq(parameters.UseAzureClientSecretLogin, 'true') }}:
-            ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
-
-        # Additional custom env vars
-        ${{ each envVar in parameters.additionalEnvVars }}:
-          ${{ envVar.Key }}: ${{ envVar.Value }}
+      # Additional custom env vars
+      ${{ each envVar in parameters.additionalEnvVars }}:
+        ${{ envVar.Key }}: ${{ envVar.Value }}
 
 
   - pwsh: |
