@@ -97,69 +97,68 @@ function Connect-ToAzureCliOidc
     _LogMessage -Level 'INFO' -Message 'OIDC login OK.' -InvocationName $MyInvocation.MyCommand.Name
 }
 
-function Connect-ToAzureCliDeviceCode
-{
+function Connect-ToAzureCliDeviceCode {
     param(
         [string]$TenantId,
         [string]$SubscriptionId
     )
 
-    # ── 1. Is the CLI already logged in? ────────────────────────────────────
-    $currentId = az account show --query id -o tsv 2> $null
-    if ($LASTEXITCODE -eq 0 -and $currentId)
-    {
-        _LogMessage -Level 'INFO' -Message "Azure CLI already authenticated (subscription id: $currentId) – skipping device-code login." -InvocationName $MyInvocation.MyCommand.Name
+    $invocation = $MyInvocation.MyCommand.Name
 
-        # caller may still want to switch subscription
-        if ($SubscriptionId)
-        {
-            az account set --subscription $SubscriptionId
-            _LogMessage -Level 'DEBUG' -Message "az account set exit-code: $LASTEXITCODE" -InvocationName $MyInvocation.MyCommand.Name
-            if ($LASTEXITCODE -ne 0)
-            {
-                _LogMessage -Level 'WARN' -Message "Unable to switch to subscription $SubscriptionId." -InvocationName $MyInvocation.MyCommand.Name
+    try {
+        # ── Check if already logged in and with correct tenant/sub ──
+        $accountInfo = az account show --output json | ConvertFrom-Json
+
+        if ($accountInfo -and $accountInfo.id) {
+            $currentSubId = $accountInfo.id
+            $currentTenant = $accountInfo.tenantId
+
+            $isSubMatch = -not $SubscriptionId -or ($SubscriptionId -eq $currentSubId)
+            $isTenantMatch = -not $TenantId -or ($TenantId -eq $currentTenant)
+
+            if ($isSubMatch -and $isTenantMatch) {
+                _LogMessage -Level 'INFO' -Message "Azure CLI already authenticated with correct subscription and tenant (sub: $currentSubId, tenant: $currentTenant) – skipping login." -InvocationName $invocation
+                return
+            }
+
+            if (-not $isSubMatch -and $SubscriptionId) {
+                _LogMessage -Level 'INFO' -Message "Switching subscription to $SubscriptionId..." -InvocationName $invocation
+                az account set --subscription $SubscriptionId
+                if ($LASTEXITCODE -ne 0) {
+                    _LogMessage -Level 'WARN' -Message "Unable to switch to subscription $SubscriptionId." -InvocationName $invocation
+                }
+                return
             }
         }
-        return
-    }
 
-    # ── 2. Perform interactive login ───────────────────────────────────────
-    try
-    {
-        _LogMessage -Level 'INFO' -Message 'Azure CLI device-code login…' -InvocationName $MyInvocation.MyCommand.Name
+        # ── Perform interactive login ──
+        _LogMessage -Level 'INFO' -Message 'Azure CLI device-code login…' -InvocationName $invocation
 
-        if ($TenantId)
-        {
+        if ($TenantId) {
             az login --use-device-code --tenant $TenantId --allow-no-subscriptions
-        }
-        else
-        {
+        } else {
             az login --use-device-code --allow-no-subscriptions
         }
-        _LogMessage -Level 'DEBUG' -Message "az login exit-code: $LASTEXITCODE" -InvocationName $MyInvocation.MyCommand.Name
-        if ($LASTEXITCODE -ne 0)
-        {
+
+        if ($LASTEXITCODE -ne 0) {
             throw 'az login failed (device-code).'
         }
 
-        if ($SubscriptionId)
-        {
+        if ($SubscriptionId) {
             az account set --subscription $SubscriptionId
-            _LogMessage -Level 'DEBUG' -Message "az account set exit-code: $LASTEXITCODE" -InvocationName $MyInvocation.MyCommand.Name
-            if ($LASTEXITCODE -ne 0)
-            {
+            if ($LASTEXITCODE -ne 0) {
                 throw "Unable to set subscription $SubscriptionId."
             }
         }
 
-        _LogMessage -Level 'INFO' -Message 'Device-code login OK.' -InvocationName $MyInvocation.MyCommand.Name
+        _LogMessage -Level 'INFO' -Message 'Device-code login OK.' -InvocationName $invocation
     }
-    catch
-    {
-        _LogMessage -Level 'ERROR' -Message "Device-code login failed: $( $_.Exception.Message )" -InvocationName $MyInvocation.MyCommand.Name
+    catch {
+        _LogMessage -Level 'ERROR' -Message "Device-code login failed: $($_.Exception.Message)" -InvocationName $invocation
         throw
     }
 }
+
 
 
 function Test-AzureCliConnection

@@ -19,14 +19,14 @@ param (
     [string]$TerraformPlanFileName = "tfplan.plan",
     [string]$TerraformDestroyPlanFileName = "tfplan-destroy.plan",
     [string]$TerraformCodeLocation = "terraform",
-    [string[]]$TerraformStackToRun = @('all'),
+    [string[]]$TerraformStackToRun = @('rg'),
     [string]$CreateTerraformWorkspace = "true",
     [string]$TerraformWorkspace = "dev",
     [string]$InstallAzureCli = "false",
     [string]$AttemptAzureLogin = "true",
-    [string]$UseAzureClientSecretLogin = "true",
+    [string]$UseAzureClientSecretLogin = "false",
     [string]$UseAzureOidcLogin = "false",
-    [string]$UseAzureUserLogin = "false",
+    [string]$UseAzureUserLogin = "true",
     [string]$UseAzureManagedIdentityLogin = "false"
 )
 
@@ -235,7 +235,7 @@ try
             # ── INIT ──────────────────────────────────────────────────────────────
             if ($convertedRunTerraformInit)
             {
-                Invoke-TerraformInit -CodePath $folder -InitArgs '-input=false','-upgrade=true'
+                Invoke-TerraformInit -CodePath $folder -InitArgs $TerraformInitExtraArgs
             }
 
             # workspace (needs an init first)
