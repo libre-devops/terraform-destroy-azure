@@ -65,11 +65,11 @@ parameters:
     default: "true"
     displayName: 'Use Azure DevOps Service Connection'
 
-  - name: PoolName
+  - name: DebugMode
     type: string
-    values: [ "Azure Pipelines", "Default" ]
-    default: "Default"
-    displayName: "Which Azure DevOps Pool to use"
+    values: [ "true", "false" ]
+    default: "true"
+    displayName: "Debug mode enabled"
 
 resources:
   repositories:
@@ -93,4 +93,6 @@ steps:
       CreateTerraformWorkspace: ${{ parameters.CreateTerraformWorkspace }}
       TerraformWorkspace: ${{ parameters.TerraformWorkspace }}
       CheckovSkipCheck: ${{ parameters.CheckovSkipCheck }}
+      DebugMode: ${{ parameters.DebugMode }}
       serviceConnection: ${{ parameters.serviceConnection }}
+

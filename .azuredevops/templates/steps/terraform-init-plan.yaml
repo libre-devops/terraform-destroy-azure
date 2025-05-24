@@ -237,36 +237,36 @@ steps:
 
   - pwsh: |
       pwsh -File "$(Build.SourcesDirectory)\Run-AzTerraform.ps1" `
-        -TerraformCodeLocation           '${{ parameters.TerraformCodeLocation }}' `
-        -TerraformStackToRunJson          ${{ parameters.TerraformStackToRunJson }}' `
-        -TerraformWorkspace              '${{ parameters.TerraformWorkspace }}' `
-        -RunTerraformInit                '${{ parameters.RunTerraformInit }}' `
-        -RunTerraformPlan                '${{ parameters.RunTerraformPlan }}' `
-        -RunTerraformPlanDestroy         '${{ parameters.RunTerraformPlanDestroy }}' `
-        -RunTerraformApply               '${{ parameters.RunTerraformApply }}' `
-        -RunTerraformDestroy             '${{ parameters.RunTerraformDestroy }}' `
+        -TerraformCodeLocation           ${{ parameters.TerraformCodeLocation }} `
+        -TerraformStackToRunJson          ${{ parameters.TerraformStackToRunJson }} `
+        -TerraformWorkspace              ${{ parameters.TerraformWorkspace }} `
+        -RunTerraformInit                ${{ parameters.RunTerraformInit }} `
+        -RunTerraformPlan                ${{ parameters.RunTerraformPlan }} `
+        -RunTerraformPlanDestroy         ${{ parameters.RunTerraformPlanDestroy }} `
+        -RunTerraformApply               ${{ parameters.RunTerraformApply }} `
+        -RunTerraformDestroy             ${{ parameters.RunTerraformDestroy }} `
         -TerraformPlanExtraArgs          ${{ parameters.TerraformPlanExtraArgs }} `
         -TerraformPlanDestroyExtraArgs   ${{ parameters.TerraformPlanDestroyExtraArgs }} `
         -TerraformApplyExtraArgs         ${{ parameters.TerraformApplyExtraArgs }} `
         -TerraformDestroyExtraArgs       ${{ parameters.TerraformDestroyExtraArgs }} `
-        -DebugMode                       '${{ parameters.DebugMode }}' `
-        -DeletePlanFiles                 '${{ parameters.DeletePlanFiles }}' `
-        -TerraformVersion                '${{ parameters.TerraformVersion }}' `
-        -RunCheckov                      '${{ parameters.RunCheckov }}' `
-        -CheckovSkipCheck                '${{ parameters.CheckovSkipCheck }}' `
-        -CheckovSoftfail                 '${{ parameters.CheckovSoftfail }}' `
-        -TerraformPlanFileName           '${{ parameters.TerraformPlanFileName }}' `
-        -TerraformDestroyPlanFileName    '${{ parameters.TerraformDestroyPlanFileName }}' `
-        -CreateTerraformWorkspace        '${{ parameters.CreateTerraformWorkspace }}' `
-        -UseAzureClientSecretLogin       '${{ parameters.UseAzureClientSecretLogin }}' `
-        -UseAzureOidcLogin               '${{ parameters.UseAzureOidcLogin }}' `
-        -UseAzureUserLogin               '${{ parameters.UseAzureUserLogin }}' `
-        -UseAzureManagedIdentityLogin    '${{ parameters.UseAzureManagedIdentityLogin }}' `
-        -UseAzureServiceConnection       '${{ parameters.UseAzureServiceConnection }}' `
-        -InstallTenvTerraform            '${{ parameters.InstallTenvTerraform }}' `
-        -InstallAzureCli                 '${{ parameters.InstallAzureCli }}' `
-        -AttemptAzureLogin               '${{ parameters.AttemptAzureLogin }}' `
-        -InstallCheckov                  '${{ parameters.InstallCheckov }}'
+        -DebugMode                       ${{ parameters.DebugMode }} `
+        -DeletePlanFiles                 ${{ parameters.DeletePlanFiles }} `
+        -TerraformVersion                ${{ parameters.TerraformVersion }} `
+        -RunCheckov                      ${{ parameters.RunCheckov }} `
+        -CheckovSkipCheck                ${{ parameters.CheckovSkipCheck }} `
+        -CheckovSoftfail                 ${{ parameters.CheckovSoftfail }} `
+        -TerraformPlanFileName           ${{ parameters.TerraformPlanFileName }} `
+        -TerraformDestroyPlanFileName    ${{ parameters.TerraformDestroyPlanFileName }} `
+        -CreateTerraformWorkspace        ${{ parameters.CreateTerraformWorkspace }} `
+        -UseAzureClientSecretLogin       ${{ parameters.UseAzureClientSecretLogin }} `
+        -UseAzureOidcLogin               ${{ parameters.UseAzureOidcLogin }} `
+        -UseAzureUserLogin               ${{ parameters.UseAzureUserLogin }} `
+        -UseAzureManagedIdentityLogin    ${{ parameters.UseAzureManagedIdentityLogin }} `
+        -UseAzureServiceConnection       ${{ parameters.UseAzureServiceConnection }} `
+        -InstallTenvTerraform            ${{ parameters.InstallTenvTerraform }} `
+        -InstallAzureCli                 ${{ parameters.InstallAzureCli }} `
+        -AttemptAzureLogin               ${{ parameters.AttemptAzureLogin }} `
+        -InstallCheckov                  ${{ parameters.InstallCheckov }}
     name: RunAzTerraform
     displayName: 'Run Terraform orchestration'
     env:
