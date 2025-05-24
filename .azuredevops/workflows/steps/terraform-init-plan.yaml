@@ -1,0 +1,93 @@
+parameters:
+  parameters:
+    - name: serviceConnection
+      type: string
+      default: "spn-libd-uks-dev-mgmt-01-client-secret-enabled"
+      displayName: 'Azure DevOps Service Connection'
+      values:
+        - "spn-libd-uks-dev-mgmt-01-client-secret-enabled"
+        - "spn-libd-uks-dev-mgmt-01"
+
+    - name: TerraformCodeLocation
+      type: string
+      default: 'terraform'
+      displayName: 'Terraform Code Directory Path'
+
+    - name: TerraformStackToRun
+      type: object
+      default: [ 'all' ]
+      displayName: 'Terraform Stacks to Run'
+
+    - name: CreateTerraformWorkspace
+      type: string
+      values: [ "true", "false" ]
+      default: "true"
+      displayName: 'Create or Select Terraform Workspace'
+
+    - name: TerraformWorkspace
+      type: string
+      default: 'dev'
+      displayName: 'Terraform Workspace Name'
+
+    - name: CheckovSkipCheck
+      type: string
+      default: 'CKV2_AZURE_31'
+      displayName: 'Checkov Skip Checks (Comma-Separated)'
+
+    - name: UseAzureClientSecretLogin
+      type: string
+      values: [ "true", "false" ]
+      default: "false"
+      displayName: 'Use Azure Client Secret Login'
+
+    - name: UseAzureOidcLogin
+      type: string
+      values: [ "true", "false" ]
+      default: "false"
+      displayName: 'Use Azure OIDC Login'
+
+    - name: UseAzureManagedIdentityLogin
+      type: string
+      values: [ "true", "false" ]
+      default: "false"
+      displayName: 'Use Azure Managed Identity Login'
+
+    - name: UseAzureServiceConnection
+      type: string
+      values: [ "true", "false" ]
+      default: "true"
+      displayName: 'Use Azure DevOps Service Connection'
+
+    - name: PoolName
+      type: string
+      values: ["Azure Pipelines", "Default"]
+      default: "Default"
+      displayName: "Which Azure DevOps Pool to use"
+
+resources:
+  repositories:
+    - repository: githubTemplates
+      type: github
+      name: libre-devops/terraform-azure-azdo-pipeline-templates
+      ref: main  # or a tag like refs/tags/v1.0.0
+      endpoint: libredevops  # Service connection to GitHub
+
+pool:
+  ${{ if eq(parameters.PoolName, 'Azure Pipelines') }}:
+    vmImage: ${{ parameters.VMImage }}
+  ${{ else }}:
+    name: ${{ parameters.PoolName }}
+
+
+steps:
+  - template: templates/steps/terraform-init-plan.yml@githubTemplates  # path in the external repo
+    parameters:
+      TerraformCodeLocation: ${{ parameters.TerraformCodeLocation }}
+      TerraformStackToRun: ${{ parameters.TerraformStacksToRun }}
+      UseAzureOidcLogin: ${{ parameters.UseAzureOidcLogin }}
+      UseAzureManagedIdentityLogin: ${{ parameters.UseAzureManagedIdentityLogin }}
+      UseAzureClientSecretLogin: ${{ parameters.UseAzureClientSecretLogin }}
+      CreateTerraformWorkspace: ${{ parameters.CreateTerraformWorkspace }}
+      TerraformWorkspace: ${{ parameters.TerraformWorkspace }}
+      CheckovSkipCheck: ${{ parameters.CheckovSkipCheck }}
+      serviceConnection: ${{ parameters.serviceConnection }}

@@ -2,160 +2,192 @@ parameters:
   - name: TerraformCodeLocation
     type: string
     default: 'terraform'
+    displayName: 'Terraform Code Path'
 
   - name: TerraformStackToRun
     type: object
     default: [ 'all' ]
+    displayName: 'Terraform Stacks to Run'
 
   - name: TerraformWorkspace
     type: string
-    default: 'dev'
+    default: ''
+    displayName: 'Terraform Workspace'
 
   - name: RunTerraformInit
     type: string
     values: [ "true", "false" ]
     default: "true"
+    displayName: 'Run Terraform Init'
 
   - name: RunTerraformPlan
     type: string
     values: [ "true", "false" ]
     default: "true"
+    displayName: 'Run Terraform Plan'
 
   - name: RunTerraformPlanDestroy
     type: string
     values: [ "true", "false" ]
     default: "false"
+    displayName: 'Run Terraform Plan Destroy'
 
   - name: RunTerraformApply
     type: string
     values: [ "true", "false" ]
     default: "false"
+    displayName: 'Run Terraform Apply'
 
   - name: RunTerraformDestroy
     type: string
     values: [ "true", "false" ]
     default: "false"
+    displayName: 'Run Terraform Destroy'
 
   - name: TerraformPlanExtraArgs
     type: object
     default: [ ]
+    displayName: 'Extra Args for terraform plan'
 
   - name: TerraformPlanDestroyExtraArgs
     type: object
     default: [ ]
+    displayName: 'Extra Args for terraform plan -destroy'
 
   - name: TerraformApplyExtraArgs
     type: object
     default: [ ]
+    displayName: 'Extra Args for terraform apply'
 
   - name: TerraformDestroyExtraArgs
     type: object
     default: [ ]
+    displayName: 'Extra Args for terraform destroy'
 
   - name: DebugMode
     type: string
     values: [ "true", "false" ]
     default: "false"
+    displayName: 'Enable Debug Logging'
 
   - name: DeletePlanFiles
     type: string
     values: [ "true", "false" ]
     default: "true"
+    displayName: 'Delete Plan Files After Execution'
 
   - name: TerraformVersion
     type: string
     default: 'latest'
+    displayName: 'Terraform Version'
 
   - name: RunCheckov
     type: string
     values: [ "true", "false" ]
     default: "true"
+    displayName: 'Run Checkov Scan'
 
   - name: CheckovSkipCheck
     type: string
-    default: 'CKV2_AZURE_31'
+    default: ''
+    displayName: 'Checkov Skip Checks (Comma-Separated)'
 
   - name: CheckovSoftfail
     type: string
     values: [ "true", "false" ]
     default: "true"
+    displayName: 'Soft-Fail Checkov Scan'
 
   - name: TerraformPlanFileName
     type: string
     default: 'tfplan.plan'
+    displayName: 'Terraform Plan File Name'
 
   - name: TerraformDestroyPlanFileName
     type: string
     default: 'tfplan-destroy.plan'
+    displayName: 'Terraform Destroy Plan File Name'
 
   - name: CreateTerraformWorkspace
     type: string
     values: [ "true", "false" ]
     default: "true"
+    displayName: 'Create or Select Terraform Workspace'
 
   - name: UseAzureClientSecretLogin
     type: string
     values: [ "true", "false" ]
     default: "false"
+    displayName: 'Use Azure Client Secret Login'
 
   - name: UseAzureOidcLogin
     type: string
     values: [ "true", "false" ]
     default: "false"
+    displayName: 'Use Azure OIDC Login'
 
   - name: UseAzureUserLogin
     type: string
     values: [ "true", "false" ]
     default: "false"
+    displayName: 'Use Azure User (Device Code) Login'
 
   - name: UseAzureManagedIdentityLogin
     type: string
     values: [ "true", "false" ]
     default: "false"
+    displayName: 'Use Azure Managed Identity Login'
 
   - name: UseAzureServiceConnection
     type: string
     values: [ "true", "false" ]
     default: "true"
+    displayName: 'Use Azure DevOps Service Connection'
 
   - name: InstallTenvTerraform
     type: string
     values: [ "true", "false" ]
-    default: "true"
+    default: "false"
+    displayName: 'Install Tenv and Terraform'
 
   - name: InstallAzureCli
     type: string
     values: [ "true", "false" ]
     default: "false"
+    displayName: 'Install Azure CLI'
 
   - name: AttemptAzureLogin
     type: string
     values: [ "true", "false" ]
-    default: "true"
+    default: "false"
+    displayName: 'Attempt Azure Login in Script'
 
   - name: InstallCheckov
     type: string
     values: [ "true", "false" ]
     default: "false"
+    displayName: 'Install Checkov'
 
   - name: serviceConnection
-    displayName: "Service Connection"
     type: string
+    displayName: 'Azure DevOps Service Connection Name'
 
   - name: additionalEnvVars
-    displayName: "Additional Environment Variables"
     type: object
     default: { }
+    displayName: 'Additional Environment Variables to Export'
 
   - name: BackendUseAzureADAuth
-    displayName: "Should backend use AzureAD auth"
     type: string
     values: [ "true", "false" ]
     default: "true"
+    displayName: 'Backend Authentication via Azure AD'
 
   - name: TargetSubscriptionId
     type: string
     default: ''
+    displayName: 'Target Azure Subscription ID (Overrides Default)'
+
 
     steps:
       - checkout: self
@@ -184,6 +216,10 @@ parameters:
             if ("${{ parameters.UseAzureOidcLogin }}" -eq "true") {
               Write-Host "##vso[task.setvariable variable=ARM_USE_OIDC]true"
               Write-Host "##vso[task.setvariable variable=ARM_OIDC_TOKEN]$env:idToken"
+            }
+            
+            if ("${{ parameters.UseAzureManagedIdentityLogin }}" -eq "true") {
+              Write-Host "##vso[task.setvariable variable=ARM_USE_MSI]true"
             }
 
             if ("${{ parameters.UseAzureClientSecretLogin }}" -eq "true") {
@@ -249,17 +285,16 @@ parameters:
                 ARM_OIDC_TOKEN: $(ARM_OIDC_TOKEN)
 
               # Only if using client secret auth
+              ${{ if eq(parameters.UseAzureManagedIdentityLogin, 'true') }}:
+                ARM_USE_MSI: true
+
+              # Only if using client secret auth
               ${{ if eq(parameters.UseAzureClientSecretLogin, 'true') }}:
                 ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
 
             # Additional custom env vars
             ${{ each envVar in parameters.additionalEnvVars }}:
               ${{ envVar.Key }}: ${{ envVar.Value }}
-
-
-          # Dynamically inject additional environment variables
-          ${{ each envVar in parameters.additionalEnvVars }}:
-            ${{ envVar.Key }}: ${{ envVar.Value }}
 
 
       - pwsh: |
