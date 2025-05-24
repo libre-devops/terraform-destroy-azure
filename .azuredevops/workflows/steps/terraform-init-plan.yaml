@@ -40,7 +40,7 @@ parameters:
   - name: UseAzureClientSecretLogin
     type: string
     values: [ "true", "false" ]
-    default: "false"
+    default: "true"
     displayName: 'Use Azure Client Secret Login'
 
   - name: UseAzureOidcLogin
