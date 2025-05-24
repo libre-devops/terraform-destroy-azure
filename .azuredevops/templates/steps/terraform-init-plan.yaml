@@ -273,7 +273,7 @@ steps:
           -AttemptAzureLogin                    '${{ parameters.AttemptAzureLogin }}' `
           -InstallCheckov                       '${{ parameters.InstallCheckov }}'
     name: RunAzTerraform
-    displayName: 'Run Terraform orchestration'
+    displayName: 'Run Terraform init & Terraform plan'
     env:
       ${{ if eq(parameters.UseAzureServiceConnection, 'true') }}:
         # Always required with service connection

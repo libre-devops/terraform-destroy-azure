@@ -381,13 +381,9 @@ finally
                     -InvocationName $MyInvocation.MyCommand.Name
     }
 
-    if ($convertedUseAzureUserLogin)
+    if ($convertedUseAzureUserLogin -and $convertedAttemptAzureLogin)
     {
         Disconnect-AzureCli -IsUserDeviceLogin $true
-    }
-    else
-    {
-        Disconnect-AzureCli -IsUserDeviceLogin $false
     }
 
     $Env:TF_LOG = $null
