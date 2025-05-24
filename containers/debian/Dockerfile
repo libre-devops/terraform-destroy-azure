@@ -45,6 +45,7 @@ RUN useradd -ms /bin/bash ${NORMAL_USER} && \
     nano \
     software-properties-common \
     libsqlite3-dev \
+    procps \
     libssl-dev \
     lsb-release \
     unzip \
