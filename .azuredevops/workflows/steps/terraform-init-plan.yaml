@@ -1,4 +1,4 @@
-name: $(Build.DefinitionName)-$(date:yyyyMMdd)$(rev:.r)
+name: terraform-init-plan.yaml-$(Build.DefinitionName)-$(date:yyyyMMdd)$(rev:.r)
 
 trigger: none
 
@@ -79,7 +79,7 @@ pool: 'Default'
 
 
 steps:
-  - template: templates/steps/terraform-init-plan.yml@githubTemplates  # path in the external repo
+  - template: .azuredevops/templates/steps/terraform-init-plan.yml@githubTemplates  # path in the external repo
     parameters:
       TerraformCodeLocation: ${{ parameters.TerraformCodeLocation }}
       TerraformStackToRun: ${{ parameters.TerraformStackToRun }}
