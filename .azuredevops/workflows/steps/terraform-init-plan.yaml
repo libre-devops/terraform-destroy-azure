@@ -71,7 +71,7 @@ resources:
       ref: main  # or a tag like refs/tags/v1.0.0
       endpoint: libredevops  # Service connection to GitHub
 
-pool: ${{ parameters.PoolName }}
+pool: 'Default'
 
 
 steps:
