@@ -5,8 +5,8 @@ parameters:
     displayName: 'Terraform Code Path'
 
   - name: TerraformStackToRun
-    type: string
-    default: '["all"]'
+    type: array
+    default: [ "all" ]
     displayName: 'Terraform Stacks to Run'
 
   - name: TerraformWorkspace

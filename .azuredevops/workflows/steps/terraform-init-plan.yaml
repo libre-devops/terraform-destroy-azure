@@ -17,8 +17,8 @@ parameters:
     displayName: 'Terraform Code Directory Path'
 
   - name: TerraformStackToRun
-    type: string
-    default: '["all"]'
+    type: array
+    default: [ "all" ]
     displayName: 'Terraform Stacks to Run'
 
   - name: CreateTerraformWorkspace
@@ -63,7 +63,7 @@ parameters:
 
   - name: PoolName
     type: string
-    values: ["Azure Pipelines", "Default"]
+    values: [ "Azure Pipelines", "Default" ]
     default: "Default"
     displayName: "Which Azure DevOps Pool to use"
 
