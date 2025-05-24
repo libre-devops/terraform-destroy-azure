@@ -238,7 +238,7 @@ steps:
   - pwsh: |
       pwsh -File "$(Build.SourcesDirectory)\Run-AzTerraform.ps1" `
         -TerraformCodeLocation           '${{ parameters.TerraformCodeLocation }}' `
-        -TerraformStackToRun              $([string]::Join(',', @${{ parameters.TerraformStackToRun }}))  `
+        -TerraformStackToRun              ${{ convertToJson(parameters.TerraformStackToRun) }}  `
         -TerraformWorkspace              '${{ parameters.TerraformWorkspace }}' `
         -RunTerraformInit                '${{ parameters.RunTerraformInit }}' `
         -RunTerraformPlan                '${{ parameters.RunTerraformPlan }}' `
