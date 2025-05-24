@@ -1,0 +1,278 @@
+parameters:
+  - name: TerraformCodeLocation
+    type: string
+    default: 'terraform'
+
+  - name: TerraformStackToRun
+    type: object
+    default: [ 'all' ]
+
+  - name: TerraformWorkspace
+    type: string
+    default: 'dev'
+
+  - name: RunTerraformInit
+    type: string
+    values: [ "true", "false" ]
+    default: "true"
+
+  - name: RunTerraformPlan
+    type: string
+    values: [ "true", "false" ]
+    default: "true"
+
+  - name: RunTerraformPlanDestroy
+    type: string
+    values: [ "true", "false" ]
+    default: "false"
+
+  - name: RunTerraformApply
+    type: string
+    values: [ "true", "false" ]
+    default: "false"
+
+  - name: RunTerraformDestroy
+    type: string
+    values: [ "true", "false" ]
+    default: "false"
+
+  - name: TerraformPlanExtraArgs
+    type: object
+    default: [ ]
+
+  - name: TerraformPlanDestroyExtraArgs
+    type: object
+    default: [ ]
+
+  - name: TerraformApplyExtraArgs
+    type: object
+    default: [ ]
+
+  - name: TerraformDestroyExtraArgs
+    type: object
+    default: [ ]
+
+  - name: DebugMode
+    type: string
+    values: [ "true", "false" ]
+    default: "false"
+
+  - name: DeletePlanFiles
+    type: string
+    values: [ "true", "false" ]
+    default: "true"
+
+  - name: TerraformVersion
+    type: string
+    default: 'latest'
+
+  - name: RunCheckov
+    type: string
+    values: [ "true", "false" ]
+    default: "true"
+
+  - name: CheckovSkipCheck
+    type: string
+    default: 'CKV2_AZURE_31'
+
+  - name: CheckovSoftfail
+    type: string
+    values: [ "true", "false" ]
+    default: "true"
+
+  - name: TerraformPlanFileName
+    type: string
+    default: 'tfplan.plan'
+
+  - name: TerraformDestroyPlanFileName
+    type: string
+    default: 'tfplan-destroy.plan'
+
+  - name: CreateTerraformWorkspace
+    type: string
+    values: [ "true", "false" ]
+    default: "true"
+
+  - name: UseAzureClientSecretLogin
+    type: string
+    values: [ "true", "false" ]
+    default: "false"
+
+  - name: UseAzureOidcLogin
+    type: string
+    values: [ "true", "false" ]
+    default: "false"
+
+  - name: UseAzureUserLogin
+    type: string
+    values: [ "true", "false" ]
+    default: "false"
+
+  - name: UseAzureManagedIdentityLogin
+    type: string
+    values: [ "true", "false" ]
+    default: "false"
+
+  - name: UseAzureServiceConnection
+    type: string
+    values: [ "true", "false" ]
+    default: "true"
+
+  - name: InstallTenvTerraform
+    type: string
+    values: [ "true", "false" ]
+    default: "true"
+
+  - name: InstallAzureCli
+    type: string
+    values: [ "true", "false" ]
+    default: "false"
+
+  - name: AttemptAzureLogin
+    type: string
+    values: [ "true", "false" ]
+    default: "true"
+
+  - name: InstallCheckov
+    type: string
+    values: [ "true", "false" ]
+    default: "false"
+
+  - name: serviceConnection
+    displayName: "Service Connection"
+    type: string
+
+  - name: additionalEnvVars
+    displayName: "Additional Environment Variables"
+    type: object
+    default: { }
+
+  - name: BackendUseAzureADAuth
+    displayName: "Should backend use AzureAD auth"
+    type: string
+    values: [ "true", "false" ]
+    default: "true"
+
+  - name: TargetSubscriptionId
+    type: string
+    default: ''
+
+stages:
+  - stage: TerraformInitPlan
+    displayName: 'Terraform: init & Terraform Plan'
+    jobs:
+      - job: RunTerraform
+        pool:
+          vmImage: 'windows-latest'
+        steps:
+          - checkout: self
+
+          - task: AzureCLI@2
+            displayName: 'Authenticate to Azure & set terraform environment variables'
+            condition: eq(parameters.UseAzureServiceConnection, 'true')
+            name: 'AzureLogin'
+            inputs:
+              azureSubscription: ${{ parameters.serviceConnection }}
+              scriptType: 'pscore'
+              scriptLocation: inlineScript
+              inlineScript: |
+                Write-Host "##vso[task.setvariable variable=ARM_CLIENT_ID]$env:servicePrincipalId"
+                Write-Host "##vso[task.setvariable variable=ARM_TENANT_ID]$env:tenantId"
+
+                if ("${{ parameters.TargetSubscriptionId }}" -eq "") {
+                  $subId = az account show --query id -o tsv
+                  Write-Host "Using Azure CLI subscription: $subId"
+                  Write-Host "##vso[task.setvariable variable=ARM_SUBSCRIPTION_ID]$subId"
+                } else {
+                  Write-Host "Using explicitly provided subscription: ${{ parameters.TargetSubscriptionId }}"
+                  Write-Host "##vso[task.setvariable variable=ARM_SUBSCRIPTION_ID]${{ parameters.TargetSubscriptionId }}"
+                }
+
+                if ("${{ parameters.UseAzureOidcLogin }}" -eq "true") {
+                  Write-Host "##vso[task.setvariable variable=ARM_USE_OIDC]true"
+                  Write-Host "##vso[task.setvariable variable=ARM_OIDC_TOKEN]$env:idToken"
+                }
+
+                if ("${{ parameters.UseAzureClientSecretLogin }}" -eq "true") {
+                  Write-Host "##vso[task.setvariable variable=ARM_CLIENT_SECRET]$env:servicePrincipalKey"
+                }
+
+                if ("${{ parameters.BackendUseAzureADAuth }}" -eq "true") {
+                  Write-Host "##vso[task.setvariable variable=ARM_USE_AZUREAD]true"
+                } else {
+                  Write-Host "##vso[task.setvariable variable=ARM_USE_AZUREAD]false"
+                }
+              workingDirectory: ${{ parameters.TerraformCodeLocation }}
+              addSpnToEnvironment: true
+
+
+          - pwsh: |
+              pwsh -File "$(Build.SourcesDirectory)\Run-AzTerraform.ps1" `
+                -TerraformCodeLocation           '${{ parameters.TerraformCodeLocation }}' `
+                -TerraformStackToRun             $([string]::Join(',', ${{ parameters.TerraformStackToRun }})) `
+                -TerraformWorkspace              '${{ parameters.TerraformWorkspace }}' `
+                -RunTerraformInit                '${{ parameters.RunTerraformInit }}' `
+                -RunTerraformPlan                '${{ parameters.RunTerraformPlan }}' `
+                -RunTerraformPlanDestroy         '${{ parameters.RunTerraformPlanDestroy }}' `
+                -RunTerraformApply               '${{ parameters.RunTerraformApply }}' `
+                -RunTerraformDestroy             '${{ parameters.RunTerraformDestroy }}' `
+                -TerraformPlanExtraArgs          ${{ parameters.TerraformPlanExtraArgs }} `
+                -TerraformPlanDestroyExtraArgs   ${{ parameters.TerraformPlanDestroyExtraArgs }} `
+                -TerraformApplyExtraArgs         ${{ parameters.TerraformApplyExtraArgs }} `
+                -TerraformDestroyExtraArgs       ${{ parameters.TerraformDestroyExtraArgs }} `
+                -DebugMode                       '${{ parameters.DebugMode }}' `
+                -DeletePlanFiles                 '${{ parameters.DeletePlanFiles }}' `
+                -TerraformVersion                '${{ parameters.TerraformVersion }}' `
+                -RunCheckov                      '${{ parameters.RunCheckov }}' `
+                -CheckovSkipCheck                '${{ parameters.CheckovSkipCheck }}' `
+                -CheckovSoftfail                 '${{ parameters.CheckovSoftfail }}' `
+                -TerraformPlanFileName           '${{ parameters.TerraformPlanFileName }}' `
+                -TerraformDestroyPlanFileName    '${{ parameters.TerraformDestroyPlanFileName }}' `
+                -CreateTerraformWorkspace        '${{ parameters.CreateTerraformWorkspace }}' `
+                -UseAzureClientSecretLogin       '${{ parameters.UseAzureClientSecretLogin }}' `
+                -UseAzureOidcLogin               '${{ parameters.UseAzureOidcLogin }}' `
+                -UseAzureUserLogin               '${{ parameters.UseAzureUserLogin }}' `
+                -UseAzureManagedIdentityLogin    '${{ parameters.UseAzureManagedIdentityLogin }}' `
+                -UseAzureServiceConnection       '${{ parameters.UseAzureServiceConnection }}' `
+                -InstallTenvTerraform            '${{ parameters.InstallTenvTerraform }}' `
+                -InstallAzureCli                 '${{ parameters.InstallAzureCli }}' `
+                -AttemptAzureLogin               '${{ parameters.AttemptAzureLogin }}' `
+                -InstallCheckov                  '${{ parameters.InstallCheckov }}'
+            name: RunAzTerraform
+            displayName: 'Run Terraform orchestration'
+            env:
+              env:
+                ${{ if eq(parameters.UseAzureServiceConnection, 'true') }}:
+
+                  # Always required with service connection
+                  ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+                  ARM_TENANT_ID: $(ARM_TENANT_ID)
+                  ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+                  ARM_USE_AZUREAD: $(ARM_USE_AZUREAD)
+
+                  # Only if using OIDC
+                  ${{ if eq(parameters.UseAzureOidcLogin, 'true') }}:
+                    ARM_USE_OIDC: true
+                    ARM_OIDC_TOKEN: $(ARM_OIDC_TOKEN)
+
+                  # Only if using client secret auth
+                  ${{ if eq(parameters.UseAzureClientSecretLogin, 'true') }}:
+                    ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+
+                # Additional custom env vars
+                ${{ each envVar in parameters.additionalEnvVars }}:
+                  ${{ envVar.Key }}: ${{ envVar.Value }}
+
+
+              # Dynamically inject additional environment variables
+              ${{ each envVar in parameters.additionalEnvVars }}:
+                ${{ envVar.Key }}: ${{ envVar.Value }}
+
+
+          - pwsh: |
+              Remove-Item -Path "$(Agent.BuildDirectory)\*" -Recurse -Force -ErrorAction SilentlyContinue
+              Remove-Item -Path "$(Agent.BuildDirectory)\.*" -Recurse -Force -ErrorAction SilentlyContinue
+              Remove-Item -Path "$(Agent.BuildDirectory)\s\**\*" -Recurse -Force -ErrorAction SilentlyContinue
+              Remove-Item -Path "$(Agent.BuildDirectory)\TestResults" -Recurse -Force -ErrorAction SilentlyContinue
+            condition: always()
+            displayName: 'Delete workspace files'
