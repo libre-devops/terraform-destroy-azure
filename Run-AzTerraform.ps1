@@ -19,7 +19,7 @@ param (
     [string]$TerraformPlanFileName = "tfplan.plan",
     [string]$TerraformDestroyPlanFileName = "tfplan-destroy.plan",
     [string]$TerraformCodeLocation = "terraform",
-    [string[]]$TerraformStackToRun = @('rg'), # Use 'all' to run 0_, 1_, etc and destroy in reverse order 1_, 0_ etc
+    [string]$TerraformStackToRunJson = '["rg"]', # JSON typeUse 'all' to run 0_, 1_, etc and destroy in reverse order 1_, 0_ etc
     [string]$CreateTerraformWorkspace = "true",
     [string]$TerraformWorkspace = "dev",
     [string]$InstallAzureCli = "false",
@@ -73,6 +73,19 @@ else
 
 try
 {
+
+    $TerraformStackToRun = @()
+    try {
+        $TerraformStackToRun = $TerraformStackToRunJson | ConvertFrom-Json
+        _LogMessage -Level 'DEBUG' -Message "TerraformStacksToRun post JSON conversion: $TerraformStackToRun" -InvocationName $MyInvocation.MyCommand.Name
+
+        if (-not ($TerraformStackToRun -is [System.Collections.IEnumerable])) {
+            throw "Parsed value is not an array."
+        }
+    } catch {
+        _LogMessage -Level 'ERROR' -Message "Invalid JSON provided in TerraformStackToRunJson: $_" -InvocationName $MyInvocation.MyCommand.Name
+        exit 1
+    }
 
     $convertedInstallTenvTerraform = ConvertTo-Boolean $InstallTenvTerraform
     _LogMessage -Level 'DEBUG' -Message "InstallTenvTerraform   `"$InstallTenvTerraform`"   → $convertedInstallTenvTerraform"  -InvocationName $MyInvocation.MyCommand.Name

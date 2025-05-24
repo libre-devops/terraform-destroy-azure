@@ -16,10 +16,13 @@ parameters:
     default: 'terraform'
     displayName: 'Terraform Code Directory Path'
 
-  - name: TerraformStackToRun
-    type: object
-    default:
-      - all
+  - name: TerraformStackToRunJson
+    type: string
+    default: '["rg"]'
+    values:
+      - '["rg"]'
+      - '["network"]'
+      - '["all"]'
     displayName: 'Terraform Stacks to Run'
 
   - name: CreateTerraformWorkspace

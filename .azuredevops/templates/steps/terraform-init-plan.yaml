@@ -4,10 +4,9 @@ parameters:
     default: 'terraform'
     displayName: 'Terraform Code Path'
 
-  - name: TerraformStackToRun
-    type: object
-    default:
-      - all
+  - name: TerraformStackToRunJson
+    type: string
+    default: '["all"]'
     displayName: 'Terraform Stacks to Run'
 
   - name: TerraformWorkspace
@@ -239,7 +238,7 @@ steps:
   - pwsh: |
       pwsh -File "$(Build.SourcesDirectory)\Run-AzTerraform.ps1" `
         -TerraformCodeLocation           '${{ parameters.TerraformCodeLocation }}' `
-        -TerraformStackToRun             '${{ parameters.TerraformStackToRun }}' `
+        -TerraformStackToRunJson          ${{ parameters.TerraformStackToRunJson }}' `
         -TerraformWorkspace              '${{ parameters.TerraformWorkspace }}' `
         -RunTerraformInit                '${{ parameters.RunTerraformInit }}' `
         -RunTerraformPlan                '${{ parameters.RunTerraformPlan }}' `
