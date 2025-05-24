@@ -103,6 +103,11 @@ parameters:
     default: "true"
     displayName: 'Soft-Fail Checkov Scan'
 
+  - name: CheckovExtraArgsJson
+    type: string
+    default: '[ ]'
+    displayName: 'ExtraArgs for CheckOv as JSON'
+
   - name: TerraformPlanFileName
     type: string
     default: 'tfplan.plan'
@@ -260,6 +265,7 @@ steps:
           -RunCheckov                           '${{ parameters.RunCheckov }}' `
           -CheckovSkipCheck                     '${{ parameters.CheckovSkipCheck }}' `
           -CheckovSoftfail                      '${{ parameters.CheckovSoftfail }}' `
+          -CheckovExtraArgsJson                 '${{ parameters.CheckovExtraArgsJson }}' `
           -TerraformPlanFileName                '${{ parameters.TerraformPlanFileName }}' `
           -TerraformDestroyPlanFileName         '${{ parameters.TerraformDestroyPlanFileName }}' `
           -CreateTerraformWorkspace             '${{ parameters.CreateTerraformWorkspace }}' `
