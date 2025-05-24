@@ -18,11 +18,11 @@ parameters:
 
   - name: TerraformStackToRun
     type: string
-    default: '["rg"]'
+    default: '"rg"'
     values:
-      - '["rg"]'
-      - '["network"]'
-      - '["all"]'
+      - '"rg"'
+      - '"network"'
+      - '"all"'
     displayName: 'Terraform Stacks to Run'
 
   - name: CreateTerraformWorkspace
