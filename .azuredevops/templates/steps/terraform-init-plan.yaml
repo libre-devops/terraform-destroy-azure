@@ -249,11 +249,11 @@ steps:
           -RunTerraformPlanDestroy              '${{ parameters.RunTerraformPlanDestroy }}' `
           -RunTerraformApply                    '${{ parameters.RunTerraformApply }}' `
           -RunTerraformDestroy                  '${{ parameters.RunTerraformDestroy }}' `
-          -TerraformInitExtraArgsJson           '${{ parameters.TerraformInitExtraArgs }}' `
-          -TerraformPlanExtraArgsJson           '${{ parameters.TerraformPlanExtraArgs }}' `
-          -TerraformPlanDestroyExtraArgsJson    '${{ parameters.TerraformPlanDestroyExtraArgs }}' `
-          -TerraformApplyExtraArgsJson          '${{ parameters.TerraformApplyExtraArgs }}' `
-          -TerraformDestroyExtraArgsJson        '${{ parameters.TerraformDestroyExtraArgs }}' `
+          -TerraformInitExtraArgsJson           '${{ parameters.TerraformInitExtraArgsJson }}' `
+          -TerraformPlanExtraArgsJson           '${{ parameters.TerraformPlanExtraArgsJson }}' `
+          -TerraformPlanDestroyExtraArgsJson    '${{ parameters.TerraformPlanDestroyExtraArgsJson }}' `
+          -TerraformApplyExtraArgsJson          '${{ parameters.TerraformApplyExtraArgsJson }}' `
+          -TerraformDestroyExtraArgsJson        '${{ parameters.TerraformDestroyExtraArgsJson }}' `
           -DebugMode                            '${{ parameters.DebugMode }}' `
           -DeletePlanFiles                      '${{ parameters.DeletePlanFiles }}' `
           -TerraformVersion                     '${{ parameters.TerraformVersion }}' `
