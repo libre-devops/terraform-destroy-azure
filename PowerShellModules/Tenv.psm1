@@ -1,23 +1,27 @@
-function Invoke-InstallTenv
-{
+function Invoke-InstallTenv {
     [CmdletBinding()]
+    param()
 
     $inv = $MyInvocation.MyCommand.Name
     $os = Assert-WhichOs -PassThru
 
-    if ($os -eq 'windows')
-    {
-        Assert-ChocoPath
-        _LogMessage -Level INFO -Message "Installing tenv via Chocolatey…" -InvocationName $inv
-        choco install tenv -y
+    if (-not (Get-Command tenv -ErrorAction SilentlyContinue)) {
+        if ($os -eq 'windows') {
+            Assert-ChocoPath
+            _LogMessage -Level INFO -Message "Installing tenv via Chocolatey…" -InvocationName $inv
+            choco install tenv -y
+        }
+        else {
+            Assert-HomebrewPath
+            _LogMessage -Level INFO -Message "Installing tenv via Homebrew…" -InvocationName $inv
+            brew install tenv
+        }
     }
-    else
-    {
-        Assert-HomebrewPath
-        _LogMessage -Level INFO -Message "Installing tenv via Homebrew…" -InvocationName $inv
-        brew install tenv
+    else {
+        _LogMessage -Level INFO -Message "tenv already installed." -InvocationName $inv
     }
 }
+
 
 function Test-TenvExists
 {
