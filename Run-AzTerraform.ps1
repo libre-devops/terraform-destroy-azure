@@ -4,11 +4,11 @@ param (
     [string]$RunTerraformPlanDestroy = "false",
     [string]$RunTerraformApply = "false",
     [string]$RunTerraformDestroy = "false",
-    [string[]]$TerraformInitExtraArgs = $null,
-    [string[]]$TerraformPlanExtraArgs = $null,
-    [string[]]$TerraformPlanDestroyExtraArgs = $null,
-    [string[]]$TerraformApplyExtraArgs = $null,
-    [string[]]$TerraformDestroyExtraArgs = $null,
+    [string]$TerraformInitExtraArgsJson = '[]',
+    [string]$TerraformPlanExtraArgsJson = '[]',
+    [string]$TerraformPlanDestroyExtraArgsJson = '[]',
+    [string]$TerraformApplyExtraArgsJson = '[]',
+    [string]$TerraformDestroyExtraArgsJson = '[]',
     [string]$InstallTenvTerraform = "true",
     [string]$TerraformVersion        = "latest",
     [string]$DebugMode = "false",
@@ -20,7 +20,7 @@ param (
     [string]$TerraformPlanFileName = "tfplan.plan",
     [string]$TerraformDestroyPlanFileName = "tfplan-destroy.plan",
     [string]$TerraformCodeLocation = "terraform",
-    [string[]]$TerraformStackToRun = @('rg'), # Use 'all' to run 0_, 1_, etc and destroy in reverse order 1_, 0_ etc
+    [string]$TerraformStackToRunJson = '["rg"]', # JSON format Use 'all' to run 0_, 1_, etc and destroy in reverse order 1_, 0_ etc
     [string]$CreateTerraformWorkspace = "true",
     [string]$TerraformWorkspace = "dev",
     [string]$InstallAzureCli = "false",
@@ -74,6 +74,16 @@ else
 
 try
 {
+
+    $TerraformStackToRun = $TerraformStackToRunJson | ConvertFrom-Json
+    if (-not ($TerraformStackToRun -is [System.Collections.IEnumerable])) {
+        throw "Parsed value of TerraformStackToRunJson is not an array."
+    }
+    $TerraformInitExtraArgs = $TerraformInitExtraArgsJson | ConvertFrom-Json
+    $TerraformPlanExtraArgs = $TerraformPlanExtraArgsJson | ConvertFrom-Json
+    $TerraformPlanDestroyExtraArgs = $TerraformPlanDestroyExtraArgsJson | ConvertFrom-Json
+    $TerraformApplyExtraArgs = $TerraformApplyExtraArgsJson | ConvertFrom-Json
+    $TerraformDestroyExtraArgs = $TerraformDestroyExtraArgsJson | ConvertFrom-Json
 
     $convertedInstallTenvTerraform = ConvertTo-Boolean $InstallTenvTerraform
     _LogMessage -Level 'DEBUG' -Message "InstallTenvTerraform   `"$InstallTenvTerraform`"   → $convertedInstallTenvTerraform"  -InvocationName $MyInvocation.MyCommand.Name

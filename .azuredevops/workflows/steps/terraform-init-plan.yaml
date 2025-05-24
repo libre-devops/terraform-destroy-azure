@@ -16,14 +16,16 @@ parameters:
     default: 'terraform'
     displayName: 'Terraform Code Directory Path'
 
-  - name: TerraformStackToRun
+  - name: TerraformStackToRunJson
     type: string
-    default: '"rg"'
+    default: '["rg"]'
     values:
-      - '"rg"'
-      - '"network"'
-      - '"all"'
+      - '["rg"]'
+      - '["network"]'
+      - '["rg", "network"]'
+      - '["all"]'
     displayName: 'Terraform Stacks to Run'
+
 
   - name: CreateTerraformWorkspace
     type: string
@@ -71,7 +73,7 @@ parameters:
     default: "true"
     displayName: "Debug mode enabled"
 
-  - name: TerraformInitExtraArgs
+  - name: TerraformInitExtraArgsJson
     type: string
     default: >
       [
@@ -83,7 +85,7 @@ parameters:
     displayName: 'Extra Args for terraform init'
 
 
-  - name: TerraformPlanExtraArgs
+  - name: TerraformPlanExtraArgsJson
     type: string
     default: '[ ]'
     displayName: 'Extra Args for terraform plan'
