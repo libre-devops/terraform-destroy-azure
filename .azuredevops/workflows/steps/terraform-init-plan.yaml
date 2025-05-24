@@ -17,7 +17,7 @@ parameters:
     displayName: 'Terraform Code Directory Path'
 
   - name: TerraformStackToRun
-    type: object
+    type: string
     default: [ 'all' ]
     displayName: 'Terraform Stacks to Run'
 
