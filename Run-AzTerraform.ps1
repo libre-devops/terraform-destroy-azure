@@ -10,13 +10,14 @@ param (
     [string]$TerraformApplyExtraArgsJson = '[]',
     [string]$TerraformDestroyExtraArgsJson = '[]',
     [string]$InstallTenvTerraform = "true",
-    [string]$TerraformVersion        = "latest",
+    [string]$TerraformVersion = "latest",
     [string]$DebugMode = "false",
     [string]$DeletePlanFiles = "true",
     [string]$InstallCheckov = "false",
     [string]$RunCheckov = "true",
     [string]$CheckovSkipCheck = "CKV2_AZURE_31",
     [string]$CheckovSoftfail = "true",
+    [string]$CheckovExtraArgsJson = '[]',
     [string]$TerraformPlanFileName = "tfplan.plan",
     [string]$TerraformDestroyPlanFileName = "tfplan-destroy.plan",
     [string]$TerraformCodeLocation = "terraform",
@@ -76,7 +77,8 @@ try
 {
 
     $TerraformStackToRun = $TerraformStackToRunJson | ConvertFrom-Json
-    if (-not ($TerraformStackToRun -is [System.Collections.IEnumerable])) {
+    if (-not ($TerraformStackToRun -is [System.Collections.IEnumerable]))
+    {
         throw "Parsed value of TerraformStackToRunJson is not an array."
     }
     $TerraformInitExtraArgs = $TerraformInitExtraArgsJson | ConvertFrom-Json
@@ -84,6 +86,7 @@ try
     $TerraformPlanDestroyExtraArgs = $TerraformPlanDestroyExtraArgsJson | ConvertFrom-Json
     $TerraformApplyExtraArgs = $TerraformApplyExtraArgsJson | ConvertFrom-Json
     $TerraformDestroyExtraArgs = $TerraformDestroyExtraArgsJson | ConvertFrom-Json
+    $CheckovExtraArgs = $CheckovExtraArgsJson | ConvertFrom-Json
 
     $convertedInstallTenvTerraform = ConvertTo-Boolean $InstallTenvTerraform
     _LogMessage -Level 'DEBUG' -Message "InstallTenvTerraform   `"$InstallTenvTerraform`"   → $convertedInstallTenvTerraform"  -InvocationName $MyInvocation.MyCommand.Name
@@ -307,6 +310,7 @@ try
                     Invoke-Checkov `
                 -CodePath           $folder `
                 -CheckovSkipChecks  $CheckovSkipCheck `
+                -ExtraArgs          $CheckovExtraArgs `
                 -SoftFail:          $convertedCheckovSoftfail
                 }
             }
