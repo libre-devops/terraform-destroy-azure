@@ -100,7 +100,7 @@ parameters:
   - name: CheckovSoftfail
     type: string
     values: [ "true", "false" ]
-    default: "true"
+    default: "false"
     displayName: 'Soft-Fail Checkov Scan'
 
   - name: CheckovExtraArgsJson
