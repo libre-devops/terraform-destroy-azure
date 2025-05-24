@@ -193,7 +193,6 @@ parameters:
     default: ''
     displayName: 'Target Azure Subscription ID (Overrides Default)'
 
-
 steps:
   - checkout: self
 

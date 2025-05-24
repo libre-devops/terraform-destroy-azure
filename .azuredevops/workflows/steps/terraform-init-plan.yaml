@@ -73,13 +73,13 @@ parameters:
 
   - name: TerraformInitExtraArgs
     type: string
-    default: >
-      [
-        "-backend-config=subscription_id=$(TF_VAR_ARM_BACKEND_SUBSCRIPTION_ID)",
-        "-backend-config=resource_group_name=$(TF_VAR_ARM_BACKEND_STORAGE_RG_NAME)",
-        "-backend-config=storage_account_name=$(TF_VAR_ARM_BACKEND_STORAGE_ACCOUNT)",
-        "-backend-config=container_name=$(TF_VAR_ARM_BACKEND_CONTAINER_NAME)"
-      ]
+    default: '[]'
+#      [
+#        "-backend-config=subscription_id=$(TF_VAR_ARM_BACKEND_SUBSCRIPTION_ID)",
+#        "-backend-config=resource_group_name=$(TF_VAR_ARM_BACKEND_STORAGE_RG_NAME)",
+#        "-backend-config=storage_account_name=$(TF_VAR_ARM_BACKEND_STORAGE_ACCOUNT)",
+#        "-backend-config=container_name=$(TF_VAR_ARM_BACKEND_CONTAINER_NAME)"
+#      ]
     displayName: 'Extra Args for terraform init'
 
 
