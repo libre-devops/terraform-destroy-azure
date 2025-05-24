@@ -23,6 +23,7 @@ param (
     [string]$CreateTerraformWorkspace = "true",
     [string]$TerraformWorkspace = "dev",
     [string]$InstallAzureCli = "false",
+    [string]$UseAzureServiceConnection = "false",
     [string]$AttemptAzureLogin = "true",
     [string]$UseAzureClientSecretLogin = "false",
     [string]$UseAzureOidcLogin = "false",
@@ -85,6 +86,9 @@ try
 
     Get-InstalledPrograms -Programs @("terraform")
 
+    $convertedUseAzureServiceConnection = ConvertTo-Boolean $UseAzureServiceConnection
+    _LogMessage -Level 'DEBUG' -Message "UseAzureServiceConnection:   `"$UseAzureServiceConnection`"   → $convertedUseAzureServiceConnection"  -InvocationName $MyInvocation.MyCommand.Name
+
     # Convert the string flags to Boolean and log the results at DEBUG level
     $convertedInstallAzureCli = ConvertTo-Boolean $InstallAzureCli
     _LogMessage -Level 'DEBUG' -Message "InstallAzureCli:   `"$InstallAzureCli`"   → $convertedInstallAzureCli"   -InvocationName $MyInvocation.MyCommand.Name
@@ -134,8 +138,15 @@ try
     $convertedCreateTerraformWorkspace = ConvertTo-Boolean $CreateTerraformWorkspace
     _LogMessage -Level 'DEBUG' -Message "CreateTerraformWorkspace: `"$CreateTerraformWorkspace`" → $convertedCreateTerraformWorkspace" -InvocationName "$( $MyInvocation.MyCommand.Name )"
 
+    if ($convertedAttemptAzureLogin -and $convertedUseAzureServiceConnection)
+    {
+        $msg = "This script doesn't support the use of both authentication mechanism. Setting AzureCliLogin to false because of this."
+        _LogMessage -Level 'WARN' -Message $msg -InvocationName $MyInvocation.MyCommand.Name
+        $convertedAttemptAzureLogin = $false
+    }
 
     # ── Chicken-and-egg / mutual exclusivity checks ───────────────────────────────
+
     if (-not $convertedRunTerraformInit -and (
     $convertedRunTerraformPlan -or
             $convertedRunTerraformPlanDestroy -or
@@ -174,6 +185,7 @@ try
         _LogMessage -Level 'ERROR' -Message $msg -InvocationName $MyInvocation.MyCommand.Name
         throw $msg
     }
+
 
     $processedStacks = @()
     try
