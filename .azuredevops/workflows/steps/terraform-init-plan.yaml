@@ -70,7 +70,7 @@ parameters:
   - name: DebugMode
     type: string
     values: [ "true", "false" ]
-    default: "true"
+    default: "false"
     displayName: "Debug mode enabled"
 
   - name: TerraformInitExtraArgsJson
