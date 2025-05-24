@@ -75,6 +75,16 @@ RUN DEBIAN_VERSION=$(grep '^VERSION_ID=' /etc/os-release | cut -d= -f2 | tr -d '
   apt-get install -y powershell && \
   ln -sf /usr/bin/pwsh /usr/bin/powershell
 
+ENV PYENV_ROOT /home/${NORMAL_USER}/.pyenv
+ENV PATH $PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
+
+RUN git clone https://github.com/pyenv/pyenv.git /home/${NORMAL_USER}/.pyenv && \
+    eval "$(pyenv init --path)" && \
+    pyenvLatestStable=$(pyenv install --list | grep -v - | grep -E "^\s*[0-9]+\.[0-9]+\.[0-9]+$" | tail -1) && \
+    pyenv install $pyenvLatestStable && \
+    pyenv global $pyenvLatestStable && \
+    pip install --upgrade pip
+
 #Install Azure Modules for Powershell - This can take a while, so setting as final step to shorten potential rebuilds
 RUN pwsh -Command Set-PSRepository -Name "PSGallery" -InstallationPolicy Trusted && \
     pwsh -Command Install-Module -Name Az -Force -AllowClobber -Scope AllUsers -Repository PSGallery && \
@@ -105,7 +115,6 @@ RUN echo -en "\n" | /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com
     brew install gcc && \
     brew install pipx && \
     brew install tenv && \
-    brew install pyenv && \
     brew install azure-cli
 
 RUN tenv tf install latest --verbose && \
