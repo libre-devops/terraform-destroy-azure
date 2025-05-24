@@ -5,7 +5,7 @@ param (
     [string]$RunTerraformApply = "false",
     [string]$RunTerraformDestroy = "false",
     [string]$TerraformInitExtraArgsJson = '[]',
-    [string]$TerraformInitCreateBackendStateFileName = "false",
+    [string]$TerraformInitCreateBackendStateFileName = "true",
     [string]$TerraformPlanExtraArgsJson = '[]',
     [string]$TerraformPlanDestroyExtraArgsJson = '[]',
     [string]$TerraformApplyExtraArgsJson = '[]',

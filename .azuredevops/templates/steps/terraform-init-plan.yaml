@@ -47,7 +47,7 @@ parameters:
   - name: TerraformInitCreateBackendStateFileName
     type: string
     values: [ "true", "false" ]
-    default: "false"
+    default: "true"
     displayName: 'Whether the script should attempt to make a state file based on stack name'
 
   - name: TerraformInitExtraArgsJson
