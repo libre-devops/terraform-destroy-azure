@@ -271,7 +271,6 @@ try
             $processedStacks += $folder
             _LogMessage -Level 'INFO' -Message "Resolved stack folders: $($stackFolders -join ', ')" -InvocationName $MyInvocation.MyCommand.Name
 
-
             # terraform fmt – always safe
             Invoke-TerraformFmtCheck  -CodePath $folder
 
