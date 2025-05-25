@@ -93,6 +93,7 @@ function Build-DockerImage {
     Write-Host "    context: $fullContextPath"
 
     docker build `
+        --platform=linux/amd64 `
         -f $fullDockerfilePath `
         -t $DockerImageName `
         $fullContextPath | Out-Host
