@@ -1,4 +1,4 @@
-name: terraform-init-plan.yaml-$(Build.DefinitionName)-$(date:yyyyMMdd)$(rev:.r)
+name: terraform-init-plan-apply.yaml-$(Build.DefinitionName)-$(date:yyyyMMdd)$(rev:.r)
 
 trigger: none
 
@@ -28,12 +28,6 @@ parameters:
       - '["rg", "network"]'
       - '["all"]'
     displayName: 'Terraform Stacks to Run'
-
-  - name: CreateTerraformWorkspace
-    type: string
-    values: [ "true", "false" ]
-    default: "true"
-    displayName: 'Create or Select Terraform Workspace'
 
   - name: TerraformWorkspace
     type: string
@@ -81,7 +75,7 @@ variables:
   - group: terraform-${{ parameters.TerraformWorkspace }}-vars
 
 steps:
-  - template: .azuredevops/templates/steps/terraform-init-plan.yaml@githubTemplates
+  - template: .azuredevops/templates/steps/terraform-init-plan-apply.yaml@githubTemplates
     parameters:
       TerraformCodeLocation: ${{ parameters.TerraformCodeLocation }}
       TerraformInitExtraArgsJson: ${{ parameters.TerraformInitExtraArgsJson }}

@@ -29,12 +29,6 @@ parameters:
       - '["all"]'
     displayName: 'Terraform Stacks to Run'
 
-  - name: CreateTerraformWorkspace
-    type: string
-    values: [ "true", "false" ]
-    default: "true"
-    displayName: 'Create or Select Terraform Workspace'
-
   - name: TerraformWorkspace
     type: string
     default: 'dev'
