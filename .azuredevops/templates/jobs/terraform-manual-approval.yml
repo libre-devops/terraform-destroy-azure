@@ -1,20 +1,20 @@
 parameters:
-  - name: notifyUsers
+  - name: NotifyUsers
     type: string
     displayName: 'Notify Users'
     default: ''
 
-  - name: instructions
+  - name: Instructions
     type: string
     default: 'Review the Terraform plan before applying.'
     displayName: 'Instructions'
 
-  - name: timeoutInMinutes
+  - name: TimeoutInMinutes
     type: string
     default: '60'
     displayName: 'Timeout in Minutes'
 
-  - name: onTimeout
+  - name: OnTimeout
     type: string
     default: 'reject'
     displayName: 'On Timeout'
@@ -32,8 +32,8 @@ jobs:
     steps:
       - task: ManualValidation@0
         inputs:
-          notifyUsers: ${{ parameters.notifyUsers }}
-          instructions: ${{ parameters.instructions }}
-          timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
-          onTimeout: ${{ parameters.onTimeout }}
+          notifyUsers: ${{ parameters.NotifyUsers }}
+          instructions: ${{ parameters.Instructions }}
+          timeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
+          onTimeout: ${{ parameters.OnTimeout }}
         displayName: 'Manual Approval to Apply Terraform Changes'
