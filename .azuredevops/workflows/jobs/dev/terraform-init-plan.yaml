@@ -64,7 +64,11 @@ parameters:
 
   - name: AzureDevOpsPoolName
     type: string
-    default: ''
+    default: "vmss-libd-uks-dev-02"
+    values:
+      - "Default"
+      - "Azure Pipelines"
+      - "vmss-libd-uks-dev-02"
     displayName: 'The Pool Name for the Job to run on'
 
   - name: AzurePipelinesVmImage
@@ -102,5 +106,4 @@ jobs:
       TerraformInitExtraArgsJson: ${{ parameters.TerraformInitExtraArgsJson }}
       TerraformPlanExtraArgsJson: ${{ parameters.TerraformPlanExtraArgsJson }}
       AzureDevOpsPoolName: ${{ parameters.AzureDevOpsPoolName }}
-      AzurePipelinesVmImage: ${{ parameters.AzurePipelinesVmImage }}
       dependsOn: ${{ parameters.dependsOn }}

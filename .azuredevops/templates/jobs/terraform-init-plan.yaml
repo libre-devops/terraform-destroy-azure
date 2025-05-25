@@ -244,8 +244,6 @@ parameters:
       - "outputs"
       - "resources"
 
-
-
 jobs:
   - job: TerraformInitPlan
     displayName: "Terraform Init & Terraform Plan"
