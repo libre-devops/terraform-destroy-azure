@@ -29,7 +29,7 @@ stages:
     displayName: "Manual Approval"
     dependsOn: ${{ parameters.dependsOn }}
     jobs:
-      - template: ../jobs/manual-approval-job.yaml  # Adjust path as needed
+      - template: ../jobs/terraform-manual-approval.yaml  # Adjust path as needed
         parameters:
           NotifyUsers: ${{ parameters.NotifyUsers }}
           Instructions: ${{ parameters.Instructions }}
