@@ -68,21 +68,20 @@ function Get-TerraformStackFolders
     $stackLookup = @{ }
     foreach ($dir in $allDirs)
     {
-        # Add support for allstackskip- and allstackskip_
         if ($dir.Name -match '^(?<order>\d+)[-_](?<name>.+)$')
         {
             $stackLookup[$matches.name.ToLower()] = @{
-                Path  = $dir.FullName
+                Path = $dir.FullName
                 Order = [int]$matches.order
             }
         }
-        elseif ($dir.Name -match '^allstackskip[-_](?<name>.+)$')
+        elseif ($dir.Name -match '^allstackskip[-_](?<rest>.+)$')
         {
-            _LogMessage -Level 'DEBUG' -Message "Detected skip folder: $($dir.Name) → will only be included when explicitly requested." -InvocationName $MyInvocation.MyCommand.Name
-            # Use high order so that explicit calls work, but 'all' can filter out easily
-            $stackLookup[$matches.name.ToLower()] = @{
-                Path  = $dir.FullName
-                Order = 9999  # Arbitrary high number for order, if you ever care
+            # Remove leading number/underscore from rest if present
+            $stackName = $matches.rest -replace '^\d+[-_]', ''
+            $stackLookup[$stackName.ToLower()] = @{
+                Path = $dir.FullName
+                Order = 9999
                 IsStackSkip = $true
             }
         }
@@ -147,7 +146,8 @@ function Get-TerraformStackFolders
 ###############################################################################
 # Run `terraform init`
 ###############################################################################
-function Invoke-TerraformInit {
+function Invoke-TerraformInit
+{
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)][string]$CodePath,
@@ -161,8 +161,10 @@ function Invoke-TerraformInit {
     $inv = $MyInvocation.MyCommand.Name
     $orig = Get-Location
 
-    try {
-        if (-not (Test-Path $CodePath)) {
+    try
+    {
+        if (-not (Test-Path $CodePath))
+        {
             _LogMessage -Level 'ERROR' -Message "Terraform code not found: $CodePath" -InvocationName $inv
             throw "Terraform code not found: $CodePath"
         }
@@ -172,19 +174,29 @@ function Invoke-TerraformInit {
         # Determine if a backend key is already specified in InitArgs
         $backendKeyPassed = $InitArgs | Where-Object { $_ -match '^-backend-config=key=' }
 
-        if ($CreateBackendKey -and (-not $backendKeyPassed)) {
+        if ($CreateBackendKey -and (-not $backendKeyPassed))
+        {
             # Auto-generate backend key
-            if ($StackFolderName) {
+            if ($StackFolderName)
+            {
                 $folderName = Split-Path -Path $StackFolderName -Leaf
-            } else {
+            }
+            else
+            {
                 # Default to the last folder in CodePath if StackFolderName not provided
                 $folderName = Split-Path -Path $CodePath -Leaf
             }
 
             $backendKey = ""
-            if ($BackendKeyPrefix) { $backendKey += "$BackendKeyPrefix-" }
+            if ($BackendKeyPrefix)
+            {
+                $backendKey += "$BackendKeyPrefix-"
+            }
             $backendKey += ($folderName -replace '_', '-')
-            if ($BackendKeySuffix) { $backendKey += "-$BackendKeySuffix" }
+            if ($BackendKeySuffix)
+            {
+                $backendKey += "-$BackendKeySuffix"
+            }
             $backendKey += ".terraform.tfstate"
 
             _LogMessage -Level 'DEBUG' -Message "Computed backend key name: $backendKey" -InvocationName $inv
@@ -198,15 +210,18 @@ function Invoke-TerraformInit {
         $code = $LASTEXITCODE
         _LogMessage -Level 'DEBUG' -Message "terraform init exit-code: $code" -InvocationName $inv
 
-        if ($code -ne 0) {
+        if ($code -ne 0)
+        {
             throw "terraform init failed (exit $code)."
         }
     }
-    catch {
+    catch
+    {
         _LogMessage -Level 'ERROR' -Message $_.Exception.Message -InvocationName $inv
         throw
     }
-    finally {
+    finally
+    {
         Set-Location $orig
     }
 }
@@ -488,13 +503,13 @@ function Convert-TerraformPlanToJson
 ###############################################################################
 Export-ModuleMember -Function `
     Invoke-TerraformValidate, `
-         Invoke-TerraformFmtCheck, `
-         Get-TerraformStackFolders, `
-         Invoke-TerraformInit, `
-         Invoke-TerraformWorkspaceSelect, `
-         Invoke-TerraformPlan, `
-         Invoke-TerraformPlanDestroy, `
-         Invoke-TerraformApply, `
-         Invoke-TerraformDestroy, `
-         Convert-TerraformPlanToJson
+          Invoke-TerraformFmtCheck, `
+          Get-TerraformStackFolders, `
+          Invoke-TerraformInit, `
+          Invoke-TerraformWorkspaceSelect, `
+          Invoke-TerraformPlan, `
+          Invoke-TerraformPlanDestroy, `
+          Invoke-TerraformApply, `
+          Invoke-TerraformDestroy, `
+          Convert-TerraformPlanToJson
 
