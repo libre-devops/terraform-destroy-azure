@@ -210,7 +210,7 @@ steps:
   - task: AzureCLI@2
     displayName: 'Authenticate to Azure & set terraform environment variables'
     condition: eq(${{ parameters.UseAzureServiceConnection }}, 'true')
-    name: 'AzureLogin'
+    name: 'AzureLoginTerraformPlanApply'
     inputs:
       azureSubscription: ${{ parameters.ServiceConnection }}
       scriptType: 'pscore'
@@ -285,8 +285,8 @@ steps:
           -InstallAzureCli                          '${{ parameters.InstallAzureCli }}' `
           -AttemptAzureLogin                        '${{ parameters.AttemptAzureLogin }}' `
           -InstallCheckov                           '${{ parameters.InstallCheckov }}'
-    name: RunAzTerraform
-    displayName: 'Run Terraform init & Terraform plan'
+    name: RunAzTerraformInitPlanApply
+    displayName: 'Run Terraform init, Terraform plan & Terraform Apply'
     env:
       ${{ if eq(parameters.UseAzureServiceConnection, 'true') }}:
         # Always required with service connection
