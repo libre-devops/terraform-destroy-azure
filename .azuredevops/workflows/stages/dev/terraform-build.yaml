@@ -84,8 +84,6 @@ resources:
       ref: main
       endpoint: libredevops
 
-pool: 'vmss-libd-uks-dev-02'
-
 variables:
   - group: terraform-${{ parameters.TerraformWorkspace }}-vars
 
@@ -104,7 +102,7 @@ stages:
 
   - template: .azuredevops/templates/stages/terraform-manual-approval.yaml@githubTemplates
     parameters:
-      dependsOnStages: [TerraformInitPlanStage]
+      dependsOnStages: [ TerraformInitPlanStage ]
 
   - template: .azuredevops/templates/stages/terraform-init-plan-apply.yaml@githubTemplates
     parameters:
@@ -117,4 +115,4 @@ stages:
       TerraformInitExtraArgsJson: ${{ parameters.TerraformInitExtraArgsJson }}
       TerraformPlanExtraArgsJson: ${{ parameters.TerraformPlanExtraArgsJson }}
       AzureDevOpsPoolName: ${{ parameters.AzureDevOpsPoolName }}
-      dependsOnStages: [ManualApprovalStage]
+      dependsOnStages: [ ManualApprovalStage ]
