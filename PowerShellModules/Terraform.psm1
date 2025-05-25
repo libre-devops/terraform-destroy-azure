@@ -53,9 +53,9 @@ function Get-TerraformStackFolders
         throw "Code root not found: $CodeRoot"
     }
 
-    # Match folders like 0_rg or 0-rg
+    # Match folders like 0_rg or 0-rg or stackskip_99-azdo-pipelines-setup
     $allDirs = Get-ChildItem -Path $CodeRoot -Directory |
-            Where-Object { $_.Name -match '^\d+[-_].+' }
+            Where-Object { $_.Name -match '^\d+[-_].+' -or $_.Name -match '^stackskip[-_].+' }
 
     if (-not $allDirs)
     {
@@ -68,11 +68,21 @@ function Get-TerraformStackFolders
     $stackLookup = @{ }
     foreach ($dir in $allDirs)
     {
+        # Add support for stackskip- and stackskip_
         if ($dir.Name -match '^(?<order>\d+)[-_](?<name>.+)$')
         {
             $stackLookup[$matches.name.ToLower()] = @{
                 Path  = $dir.FullName
                 Order = [int]$matches.order
+            }
+        }
+        elseif ($dir.Name -match '^stackskip[-_](?<name>.+)$')
+        {
+            # Use high order so that explicit calls work, but 'all' can filter out easily
+            $stackLookup[$matches.name.ToLower()] = @{
+                Path  = $dir.FullName
+                Order = 9999  # Arbitrary high number for order, if you ever care
+                IsStackSkip = $true
             }
         }
     }
@@ -103,7 +113,8 @@ function Get-TerraformStackFolders
 
         $stackLookup.GetEnumerator() |
                 Sort-Object { $_.Value.Order } |
-                ForEach-Object { [void]$result.Add($_.Value.Path) }
+                Where-Object { -not ($_.Value.PSObject.Properties['IsStackSkip'] -and $_.Value.IsStackSkip) } | # Skip stackskip folders
+        ForEach-Object { [void]$result.Add($_.Value.Path) }
     }
     else
     {
@@ -127,6 +138,7 @@ function Get-TerraformStackFolders
 
     return $result
 }
+
 
 
 ###############################################################################
