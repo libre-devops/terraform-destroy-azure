@@ -1,6 +1,6 @@
 FROM ubuntu:24.04
 
-LABEL org.opencontainers.image.title=base
+LABEL org.opencontainers.image.title=ubuntu
 LABEL org.opencontainers.image.source=https://github.com/libre-devops/terraform-azure-docker-gh-action
 
 ARG NORMAL_USER=builder
@@ -22,6 +22,7 @@ RUN useradd -ms /bin/bash ${NORMAL_USER} \
     && mkdir -p /home/linuxbrew \
     && chown -R ${NORMAL_USER}:${NORMAL_USER} /home/linuxbrew \
     && apt-get update \
+    && apt-get dist-upgrade -y \
     && apt-get install -y --no-install-recommends \
     apt-transport-https \
     bash \
@@ -107,12 +108,17 @@ RUN /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/instal
 RUN tenv tf install latest --verbose && \
     tenv tf use latest --verbose
 
+USER root
+
 # Clean up cache as normal user
-RUN rm -rf ~/.cache /home/${NORMAL_USER}/.cache
+RUN rm -rf /tmp/* /var/tmp/* ~/.cache /home/${NORMAL_USER}/.cache
 
 COPY entrypoint.ps1 /home/${NORMAL_USER}/entrypoint.ps1
 RUN chmod +x /home/${NORMAL_USER}/entrypoint.ps1
 
+USER ${NORMAL_USER}
+
+# Set default entrypoint (works for local runs, GH Actions will override if set in action.yml)
 ENTRYPOINT ["pwsh", "/home/builder/entrypoint.ps1"]
 
 SHELL ["pwsh", "-Command"]
