@@ -1,4 +1,5 @@
 parameters:
+
   - name: TerraformCodeLocation
     type: string
     default: 'terraform'
@@ -209,11 +210,6 @@ parameters:
     default: { }
     displayName: 'Additional Environment Variables to Export'
 
-  - name: additionalJobVars
-    type: object
-    default: { }
-    displayName: 'Additional Job Variables'
-
   - name: BackendUseAzureADAuth
     type: string
     values: [ "true", "false" ]
@@ -249,24 +245,12 @@ parameters:
       - "outputs"
       - "resources"
 
-jobs:
-  - job: TerraformInitPlan
-    displayName: "Terraform Init & Terraform Plan"
-    pool:
-      name: ${{ parameters.AzureDevOpsPoolName }}
-      ${{ if eq(parameters.AzureDevOpsPoolName, 'Azure Pipelines') }}:
-        vmImage: ${{ parameters.AzurePipelinesVmImage }}
+stages:
+  - stage: TerraformInitPlan
+    displayName: "Terraform Init & Plan"
     dependsOn: ${{ parameters.dependsOn }}
-    workspace:
-      clean: ${{ parameters.WorkspaceClean }}
-
-    ${{ if ne(length(parameters.additionalJobVars), 0) }}:
-      variables:
-        ${{ each jobVar in parameters.additionalJobVars }}:
-          ${{ jobVar.Key }}: ${{ jobVar.Value }}
-
-    steps:
-      - template: ../steps/terraform-init-plan.yaml
+    jobs:
+      - template: ../jobs/terraform-init-plan.yaml
         parameters:
           TerraformCodeLocation: ${{ parameters.TerraformCodeLocation }}
           TerraformStackToRunJson: ${{ parameters.TerraformStackToRunJson }}
@@ -308,3 +292,7 @@ jobs:
           additionalEnvVars: ${{ parameters.additionalEnvVars }}
           BackendUseAzureADAuth: ${{ parameters.BackendUseAzureADAuth }}
           TargetSubscriptionId: ${{ parameters.TargetSubscriptionId }}
+          AzureDevOpsPoolName: ${{ parameters.AzureDevOpsPoolName }}
+          AzurePipelinesVmImage: ${{ parameters.AzurePipelinesVmImage }}
+          dependsOn: ${{ parameters.dependsOn }}
+          WorkspaceClean: ${{ parameters.WorkspaceClean }}
