@@ -1,0 +1,39 @@
+parameters:
+  - name: notifyUsers
+    type: string
+    displayName: 'Notify Users'
+    default: ''
+
+  - name: instructions
+    type: string
+    default: 'Review the Terraform plan before applying.'
+    displayName: 'Instructions'
+
+  - name: timeoutInMinutes
+    type: string
+    default: '60'
+    displayName: 'Timeout in Minutes'
+
+  - name: onTimeout
+    type: string
+    default: 'reject'
+    displayName: 'On Timeout'
+
+  - name: dependsOn
+    type: object
+    default: []
+    displayName: 'Depends On'
+
+jobs:
+  - job: ManualApprovalJob
+    displayName: "Manual Approval"
+    dependsOn: ${{ parameters.dependsOn }}
+    pool: server  # This runs on the server, not on an agent
+    steps:
+      - task: ManualValidation@0
+        inputs:
+          notifyUsers: ${{ parameters.notifyUsers }}
+          instructions: ${{ parameters.instructions }}
+          timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
+          onTimeout: ${{ parameters.onTimeout }}
+        displayName: 'Manual Approval to Apply Terraform Changes'
