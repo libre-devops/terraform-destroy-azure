@@ -1,159 +1,128 @@
-# Terraform Azure AzDO Pipeline Templates
 
-A collection of **Azure DevOps pipeline templates** designed to simplify and standardize Terraform deployments for Azure.  
-These templates leverage the **LibreDevOpsHelpers** PowerShell module for reusable tasks and workflows across your pipelines, but are available within the repo locally inside `PowerShellModules` folder.
+# Libre DevOps – Terraform Azure Docker GitHub Action
 
----
+A heavily opinionated GitHub Action designed to streamline Terraform workflows targeting Azure environments. This action encapsulates a Docker container preloaded with essential tools like Terraform, Azure CLI, PowerShell, and various language version managers, facilitating consistent and secure infrastructure deployments.
 
-## Prerequisites
+## 🚀 Features
 
-- **Azure DevOps** organization and project.
-- **Terraform** code repository structured with numeric stack folders (`0_rg`, `1_network`, etc.).
-- **Service connection** in Azure DevOps with permissions to your Azure subscription.
-- **PowerShell host** with `PowerShell 7+` agents (Windows, Linux, macOS).
-- **LibreDevOpsHelpers** PowerShell module installed on agents or in the repository:
-  ```powershell
-  Install-Module -Name LibreDevOpsHelpers -Scope CurrentUser
-  ```
-  
-- You can also call the script via `Run-AzTerraform.ps1`, where the local modules are imported istead of the remote.
+- **Comprehensive Tooling:** Includes Terraform, Azure CLI, PowerShell, and version managers for Python, Node.js, Go, Ruby, PHP, and Java.
+- **Flexible Authentication:** Supports multiple Azure authentication methods, including OIDC, Client Secret, Managed Identity, and Azure AD.
+- **Modular Execution:** Allows granular control over Terraform commands (`init`, `validate`, `plan`, `apply`, `destroy`) through input parameters.
+- **Security Scanning:** Optional integration with Checkov for infrastructure security analysis.
+- **Customizable Backend Configuration:** Supports dynamic backend state file naming with optional prefixes and suffixes.
 
----
+## 📦 Docker Image
 
-## Concept
+The action utilizes a Docker container built from the provided `Dockerfile`, ensuring a consistent environment across different runs.
 
-1. **Discover Stacks**
-    - The script scans the `${TerraformCodeLocation}` folder for subdirectories matching `^\d+_.+` (e.g. `0_rg`, `1_network`, etc.).
-    - It builds an ordered list based on the leading number in each folder name.
+## 🛠️ Inputs
 
-2. **Normalize Execution Order**
-    - **Apply/Plan**: Uses the naturally sorted list (`0_rg`, then `1_network`, …).
-    - **Destroy**: When `RunTerraformPlanDestroy` or `RunTerraformDestroy` is true, it reverses the sorted list so that higher-numbered stacks teardown first (e.g. `1_network` → `0_rg`).
+The action accepts the following inputs:
 
-3. **Per-Stack Workflow**  
-   For each stack folder in the final order:
-    1. **Fmt Check**
-       ```powershell
-       Invoke-TerraformFmtCheck -CodePath $folder
-       ```
-    2. **Init** (if enabled)
-       ```powershell
-       Invoke-TerraformInit -CodePath $folder -InitArgs '-input=false','-upgrade=true'
-       ```
-    3. **Workspace Select** (if enabled)
-       ```powershell
-       Invoke-TerraformWorkspaceSelect -CodePath $folder -WorkspaceName $TerraformWorkspace
-       ```
-    4. **Validate**
-       ```powershell
-       Invoke-TerraformValidate -CodePath $folder
-       ```
-    5. **Plan / Plan-Destroy**
-        - **Plan**:
-          ```powershell
-          Invoke-TerraformPlan -CodePath $folder `
-                              -PlanFile $TerraformPlanFileName `
-                              -PlanArgs $TerraformPlanExtraArgs
-          ```
-        - **Plan-Destroy**:
-          ```powershell
-          Invoke-TerraformPlanDestroy -CodePath $folder `
-                                     -PlanFile $TerraformDestroyPlanFileName `
-                                     -PlanArgs $TerraformPlanDestroyExtraArgs
-          ```
-    6. **Convert to JSON + Checkov** (if planning)
-       ```powershell
-       Convert-TerraformPlanToJson -CodePath $folder -PlanFile $chosenPlanFile
-       Invoke-Checkov -CodePath $folder `
-                      -CheckovSkipChecks $CheckovSkipCheck `
-                      -SoftFail:$CheckovSoftfail
-       ```
-    7. **Apply / Destroy**
-        - **Apply**:
-          ```powershell
-          Invoke-TerraformApply -CodePath $folder `
-                                -SkipApprove `
-                                -ApplyArgs $TerraformApplyExtraArgs
-          ```
-        - **Destroy**:
-          ```powershell
-          Invoke-TerraformDestroy -CodePath $folder `
-                                  -SkipApprove `
-                                  -DestroyArgs $TerraformDestroyExtraArgs
-          ```
+| Name | Description | Required | Default |
+|------|-------------|----------|---------|
+| `terraform-code-location` | Path to the root folder containing Terraform code. | No | `terraform` |
+| `terraform-stack-to-run-json` | JSON array of stack names/folders to run (e.g., `['all']`, `['rg']`, `['network']`). | No | `['all']` |
+| `terraform-workspace` | Terraform workspace to use or create. | No | `""` |
+| `run-terraform-init` | Whether to run `terraform init` before other commands. | No | `true` |
+| `run-terraform-validate` | Whether to run `terraform validate` after init. | No | `true` |
+| `run-terraform-plan` | Whether to run `terraform plan`. | No | `true` |
+| `run-terraform-plan-destroy` | Whether to run `terraform plan -destroy`. | No | `false` |
+| `run-terraform-apply` | Whether to run `terraform apply` after a successful plan. | No | `false` |
+| `run-terraform-destroy` | Whether to run `terraform destroy`. | No | `false` |
+| `terraform-init-create-backend-state-file-name` | Auto-generates a backend state file name per stack. | No | `true` |
+| `terraform-init-create-backend-state-file-prefix` | Prefix for the generated backend state file name. | No | `""` |
+| `terraform-init-create-backend-state-file-suffix` | Suffix for the generated backend state file name. | No | `""` |
+| `terraform-init-extra-args-json` | JSON array of extra arguments for `terraform init`. | No | `[]` |
+| `terraform-plan-extra-args-json` | JSON array of extra arguments for `terraform plan`. | No | `[]` |
+| `terraform-plan-destroy-extra-args-json` | JSON array of extra arguments for `terraform plan -destroy`. | No | `[]` |
+| `terraform-apply-extra-args-json` | JSON array of extra arguments for `terraform apply`. | No | `[]` |
+| `terraform-destroy-extra-args-json` | JSON array of extra arguments for `terraform destroy`. | No | `[]` |
+| `debug-mode` | Enable verbose debug logging. | No | `false` |
+| `delete-plan-files` | Delete the plan files after execution. | No | `true` |
+| `terraform-version` | Terraform version to use (e.g., `latest`, `1.6.5`). | No | `latest` |
+| `run-checkov` | Whether to run Checkov security scan on the plan. | No | `true` |
+| `checkov-skip-check` | Comma-separated list of Checkov check IDs to skip. | No | `""` |
+| `checkov-softfail` | Continue pipeline even if Checkov finds issues. | No | `false` |
+| `checkov-extra-args-json` | JSON array of extra arguments for Checkov. | No | `[]` |
+| `terraform-plan-file-name` | Filename for the Terraform plan output. | No | `tfplan.plan` |
+| `terraform-destroy-plan-file-name` | Filename for the Terraform destroy plan output. | No | `tfplan-destroy.plan` |
+| `create-terraform-workspace` | If true, create or select the Terraform workspace. | No | `true` |
+| `use-azure-client-secret-login` | Enable Azure Client Secret login (SPN auth). | No | `false` |
+| `use-azure-oidc-login` | Enable Azure OIDC login. | No | `true` |
+| `use-azure-user-login` | Enable interactive user/device code login for Azure. | No | `false` |
+| `use-azure-managed-identity-login` | Enable Azure Managed Identity login. | No | `false` |
+| `use-azure-service-connection` | Enable Azure DevOps service connection. | No | `true` |
+| `install-tenv-terraform` | Install and manage Terraform with tenv. | No | `false` |
+| `install-azure-cli` | Install Azure CLI in the container. | No | `false` |
+| `attempt-azure-login` | Attempt Azure login in the script. | No | `false` |
+| `install-checkov` | Install Checkov in the container. | No | `false` |
 
-4. **Cleanup**
-    - After all stacks finish, if `DeletePlanFiles` is true, the script deletes all generated plan and JSON files from each stack folder.
+## 🧪 Example Usage
 
----
+Here's an example of how to use the action in a GitHub workflow:
 
-This ensures that your infrastructure is built in dependency order (low-numbered stacks first) and torn down in reverse (high-numbered stacks first), with consistent formatting, validation, scanning and cleanup at each step.
+```yaml
+name: 'Terraform Plan'
 
----
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [closed]
+  workflow_dispatch:
 
-## Usage
+jobs:
+  azure-terraform-job:
+    name: 'Terraform Build'
+    runs-on: ubuntu-latest
+    environment: tst
 
-1. **Import templates** in your YAML pipeline:
-   ```yaml
-   resources:
-     repositories:
-       - repository: templates
-         type: git
-         name: <your org>/terraform-azure-azdo-pipeline-templates
+    steps:
+      - uses: actions/checkout@v3
 
-   stages:
-     - template: azure-pipeline.yml@templates
-       parameters:
-         TerraformCodeLocation: 'terraform'
-         TerraformStackToRun: ['all']
-         TerraformWorkspace: 'dev'
-         UseAzureClientSecretLogin: true
-         AzureServiceConnection: 'MyAzServiceConnection'
-   ```
-
-2. **Customize parameters**:
-    - `TerraformCodeLocation`: Path to your Terraform code folder.
-    - `TerraformStackToRun`: List of stack folder names (or `all`).
-    - `TerraformWorkspace`: Terraform workspace name.
-    - `RunTerraformInit`, `RunTerraformPlan`, `RunTerraformApply`, etc. (boolean flags).
-    - `UseAzureClientSecretLogin`, `UseAzureOidcLogin`, etc. (authentication modes).
-
-3. **Leverage helpers**:  
-   Templates use `Invoke-Terraform*`, `Connect-AzureCli`, and `Invoke-Checkov` commands from the [LibreDevOpsHelpers](https://www.powershellgallery.com/packages/LibreDevOpsHelpers) module for a consistent experience.
-
----
-
-## Template Files
-
-- **azure-pipeline.yml**: Main pipeline entry point.
-- **Local-DevelopmentScript.ps1**: Run and test pipelines locally.
-- **PowerShellModules/**: Sample module directory for local development.
-
----
-
-## Local Testing
-
-To run locally without Azure DevOps:
-
-```powershell
-# Install required modules
-Install-Module -Name LibreDevOpsHelpers -Scope CurrentUser
-
-# Execute local script
-.\Local-DevelopmentScript.ps1 -TerraformCodeLocation 'terraform' -TerraformStackToRun @('all') -UseAzureClientSecretLogin $true
+      - name: Libre DevOps Terraform GitHub Action
+        id: terraform-build
+        uses: libre-devops/terraform-azure-docker-gh-action@v1
+        with:
+          terraform-code-location: "terraform"
+          terraform-stack-to-run-json: '["all"]'
+          terraform-workspace: "dev"
+          run-terraform-init: "true"
+          run-terraform-validate: "true"
+          run-terraform-plan: "true"
+          run-terraform-apply: "false"
+          run-terraform-destroy: "false"
+          terraform-version: "latest"
+          debug-mode: "false"
+          delete-plan-files: "true"
+          run-checkov: "true"
+          checkov-softfail: "false"
+          create-terraform-workspace: "true"
+          use-azure-oidc-login: "true"
+          attempt-azure-login: "true"
 ```
 
+## 🔐 Azure Authentication
+
+The action supports various Azure authentication methods:
+
+- **OIDC Login:** Recommended for GitHub Actions.
+- **Client Secret Login:** Uses service principal credentials.
+- **Managed Identity Login:** For Azure-hosted runners with managed identities.
+- **User Login:** Interactive login using device code.
+
+Set the corresponding input parameters (`use-azure-oidc-login`, `use-azure-client-secret-login`, etc.) to enable the desired authentication method.
+
+## 🧪 Testing
+
+To test the action locally or in a development environment, you can use the provided `Run-Docker.ps1` script, which builds and runs the Docker container with appropriate parameters.
+
+## 📄 License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
 ---
 
-## Contributing
-
-1. Fork the repository.
-2. Create a feature branch.
-3. Submit a pull request.
-4. CI will lint, validate, and test your changes.
-
----
-
-## License
-
-MIT © Libre DevOps  
+For more information and examples, please refer to the [repository](https://github.com/libre-devops/terraform-azure-docker-gh-action).
