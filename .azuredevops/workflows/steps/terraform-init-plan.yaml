@@ -81,7 +81,7 @@ variables:
   - group: terraform-${{ parameters.TerraformWorkspace }}-vars
 
 steps:
-  - template: .azuredevops/templates/steps/terraform-init-plan.yaml@githubTemplates  # path in the external repo
+  - template: .azuredevops/templates/steps/terraform-init-plan.yaml@githubTemplates
     parameters:
       TerraformCodeLocation: ${{ parameters.TerraformCodeLocation }}
       TerraformInitExtraArgsJson: ${{ parameters.TerraformInitExtraArgsJson }}
@@ -91,4 +91,19 @@ steps:
       CheckovSkipCheck: ${{ parameters.CheckovSkipCheck }}
       DebugMode: ${{ parameters.DebugMode }}
       ServiceConnection: ${{ parameters.ServiceConnection }}
+
+  - template: .azuredevops/templates/steps/terraform-manual-approval.yaml@githubTemplates
+
+  - template: .azuredevops/templates/steps/terraform-init-plan-apply.yaml@githubTemplates
+    parameters:
+      TerraformCodeLocation: ${{ parameters.TerraformCodeLocation }}
+      TerraformInitExtraArgsJson: ${{ parameters.TerraformInitExtraArgsJson }}
+      TerraformPlanExtraArgsJson: ${{ parameters.TerraformPlanExtraArgsJson }}
+      TerraformStackToRunJson: ${{ parameters.TerraformStackToRunJson }}
+      TerraformWorkspace: ${{ parameters.TerraformWorkspace }}
+      CheckovSkipCheck: ${{ parameters.CheckovSkipCheck }}
+      DebugMode: ${{ parameters.DebugMode }}
+      ServiceConnection: ${{ parameters.ServiceConnection }}
+
+
 
