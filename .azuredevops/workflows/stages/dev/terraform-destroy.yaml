@@ -91,7 +91,7 @@ stages:
 
   - template: .azuredevops/templates/stages/terraform-manual-approval.yaml@githubTemplates
     parameters:
-      dependsOnStages: [ TerraformInitPlanStage ]
+      dependsOnStages: [ TerraformInitPlanDestroyStage ]
 
   - template: .azuredevops/templates/stages/terraform-init-plan-destroy-apply.yaml@githubTemplates
     parameters:
