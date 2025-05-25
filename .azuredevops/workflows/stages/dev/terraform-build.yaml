@@ -1,4 +1,4 @@
-name: terraform-init-plan-apply.yaml-$(Build.DefinitionName)-$(date:yyyyMMdd)$(rev:.r)
+name: terraform-init-build.yaml-$(Build.DefinitionName)-$(date:yyyyMMdd)$(rev:.r)
 
 trigger: none
 

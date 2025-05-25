@@ -1,4 +1,4 @@
-name: terraform-init-plan-apply.yaml-$(Build.DefinitionName)-$(date:yyyyMMdd)$(rev:.r)
+name: terraform-build.yaml-$(Build.DefinitionName)-$(date:yyyyMMdd)$(rev:.r)
 
 trigger: none
 
@@ -95,7 +95,7 @@ variables:
   - group: terraform-${{ parameters.TerraformWorkspace }}-vars
 
 jobs:
-  - template: .azuredevops/templates/jobs/terraform-init-plan-apply.yaml@githubTemplates
+  - template: .azuredevops/templates/jobs/terraform-init-plan.yaml@githubTemplates
     parameters:
       ServiceConnection: ${{ parameters.ServiceConnection }}
       TerraformCodeLocation: ${{ parameters.TerraformCodeLocation }}
@@ -107,3 +107,20 @@ jobs:
       TerraformPlanExtraArgsJson: ${{ parameters.TerraformPlanExtraArgsJson }}
       AzureDevOpsPoolName: ${{ parameters.AzureDevOpsPoolName }}
       dependsOnJobs: ${{ parameters.dependsOnJobs }}
+
+  - template: .azuredevops/templates/jobs/terraform-manual-approval.yaml@githubTemplates
+    parameters:
+      dependsOnJobs: [ TerraformInitPlanJob ]
+
+  - template: .azuredevops/templates/jobs/terraform-init-plan-apply.yaml@githubTemplates
+    parameters:
+      ServiceConnection: ${{ parameters.ServiceConnection }}
+      TerraformCodeLocation: ${{ parameters.TerraformCodeLocation }}
+      TerraformStackToRunJson: ${{ parameters.TerraformStackToRunJson }}
+      TerraformWorkspace: ${{ parameters.TerraformWorkspace }}
+      CheckovSkipCheck: ${{ parameters.CheckovSkipCheck }}
+      DebugMode: ${{ parameters.DebugMode }}
+      TerraformInitExtraArgsJson: ${{ parameters.TerraformInitExtraArgsJson }}
+      TerraformPlanExtraArgsJson: ${{ parameters.TerraformPlanExtraArgsJson }}
+      AzureDevOpsPoolName: ${{ parameters.AzureDevOpsPoolName }}
+      dependsOnJobs: [ ManualApprovalJob ]
