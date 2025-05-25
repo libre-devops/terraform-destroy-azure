@@ -92,8 +92,6 @@ steps:
       DebugMode: ${{ parameters.DebugMode }}
       ServiceConnection: ${{ parameters.ServiceConnection }}
 
-  - template: .azuredevops/templates/steps/terraform-manual-approval.yaml@githubTemplates
-
   - template: .azuredevops/templates/steps/terraform-init-plan-apply.yaml@githubTemplates
     parameters:
       TerraformCodeLocation: ${{ parameters.TerraformCodeLocation }}
