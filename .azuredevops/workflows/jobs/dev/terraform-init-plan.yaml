@@ -76,12 +76,6 @@ parameters:
     default: 'ubuntu-latest'
     displayName: 'If Azure Pipelines is selected, which vmImage to run'
 
-  - name: additionalJobVars
-    type: object
-    default:
-      environment: dev
-    displayName: 'Additional Job Variables'
-
   - name: dependsOn
     displayName: "Depends On"
     type: object

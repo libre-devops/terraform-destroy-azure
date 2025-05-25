@@ -209,6 +209,12 @@ parameters:
     default: { }
     displayName: 'Additional Environment Variables to Export'
 
+  - name: additionalJobVars
+    type: object
+    default:
+      environment: dev
+    displayName: 'Additional Job Variables'
+
   - name: BackendUseAzureADAuth
     type: string
     values: [ "true", "false" ]
@@ -254,6 +260,10 @@ jobs:
     dependsOn: ${{ parameters.dependsOn }}
     workspace:
       clean: ${{ parameters.WorkspaceClean }}
+    ${{ if ne(length(parameters.additionalJobVars), 0) }}:
+      variables:
+        ${{ each jobVar in parameters.additionalJobVars }}:
+          ${{ jobVar.Key }}: ${{ jobVar.Value }}
     steps:
       - template: ../steps/terraform-init-plan-destroy.yaml
         parameters:
