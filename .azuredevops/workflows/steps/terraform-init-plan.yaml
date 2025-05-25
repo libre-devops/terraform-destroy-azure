@@ -45,30 +45,6 @@ parameters:
     default: 'CKV2_AZURE_31'
     displayName: 'Checkov Skip Checks (Comma-Separated)'
 
-  - name: UseAzureClientSecretLogin
-    type: string
-    values: [ "true", "false" ]
-    default: "true"
-    displayName: 'Use Azure Client Secret Login'
-
-  - name: UseAzureOidcLogin
-    type: string
-    values: [ "true", "false" ]
-    default: "false"
-    displayName: 'Use Azure OIDC Login'
-
-  - name: UseAzureManagedIdentityLogin
-    type: string
-    values: [ "true", "false" ]
-    default: "false"
-    displayName: 'Use Azure Managed Identity Login'
-
-  - name: UseAzureServiceConnection
-    type: string
-    values: [ "true", "false" ]
-    default: "true"
-    displayName: 'Use Azure DevOps Service Connection'
-
   - name: DebugMode
     type: string
     values: [ "true", "false" ]
@@ -111,9 +87,6 @@ steps:
       TerraformInitExtraArgsJson: ${{ parameters.TerraformInitExtraArgsJson }}
       TerraformPlanExtraArgsJson: ${{ parameters.TerraformPlanExtraArgsJson }}
       TerraformStackToRunJson: ${{ parameters.TerraformStackToRunJson }}
-      UseAzureOidcLogin: ${{ parameters.UseAzureOidcLogin }}
-      UseAzureManagedIdentityLogin: ${{ parameters.UseAzureManagedIdentityLogin }}
-      UseAzureClientSecretLogin: ${{ parameters.UseAzureClientSecretLogin }}
       TerraformWorkspace: ${{ parameters.TerraformWorkspace }}
       CheckovSkipCheck: ${{ parameters.CheckovSkipCheck }}
       DebugMode: ${{ parameters.DebugMode }}
