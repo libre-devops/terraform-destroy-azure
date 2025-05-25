@@ -91,7 +91,7 @@ jobs:
 
   - template: .azuredevops/templates/jobs/terraform-manual-approval.yaml@githubTemplates
     parameters:
-      dependsOnJobs: [ TerraformInitPlanJob ]
+      dependsOnJobs: [ TerraformInitPlanDestroyJob ]
 
   - template: .azuredevops/templates/jobs/terraform-init-plan-destroy-apply.yaml@githubTemplates
     parameters:
