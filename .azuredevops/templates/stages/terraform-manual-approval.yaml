@@ -19,15 +19,20 @@ parameters:
     default: 'reject'
     displayName: 'On Timeout'
 
-  - name: dependsOn
+  - name: dependsOnJobs
     type: object
     default: []
+    displayName: 'Depends On'
+
+  - name: dependsOnStages
+    type: object
+    default: [ ]
     displayName: 'Depends On'
 
 stages:
   - stage: ManualApprovalStage
     displayName: "Manual Approval"
-    dependsOn: ${{ parameters.dependsOn }}
+    dependsOn: ${{ parameters.dependsOnStages }}
     pool: server
     jobs:
       - template: ../jobs/terraform-manual-approval.yaml  # Adjust path as needed
@@ -36,4 +41,4 @@ stages:
           Instructions: ${{ parameters.Instructions }}
           TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
           OnTimeout: ${{ parameters.OnTimeout }}
-          dependsOn: ${{ parameters.dependsOn }}
+          dependsOn: ${{ parameters.dependsOnJobs }}

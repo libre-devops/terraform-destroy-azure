@@ -76,7 +76,7 @@ parameters:
     default: 'ubuntu-latest'
     displayName: 'If Azure Pipelines is selected, which vmImage to run'
 
-  - name: dependsOn
+  - name: dependsOnStages
     displayName: "Depends On"
     type: object
     default: [ ]
@@ -106,4 +106,4 @@ stages:
       TerraformInitExtraArgsJson: ${{ parameters.TerraformInitExtraArgsJson }}
       TerraformPlanExtraArgsJson: ${{ parameters.TerraformPlanExtraArgsJson }}
       AzureDevOpsPoolName: ${{ parameters.AzureDevOpsPoolName }}
-      dependsOn: ${{ parameters.dependsOn }}
+      dependsOnStages: ${{ parameters.dependsOn }}

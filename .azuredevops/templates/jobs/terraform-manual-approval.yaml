@@ -19,7 +19,7 @@ parameters:
     default: 'reject'
     displayName: 'On Timeout'
 
-  - name: dependsOn
+  - name: dependsOnJobs
     type: object
     default: []
     displayName: 'Depends On'
@@ -27,7 +27,7 @@ parameters:
 jobs:
   - job: ManualApprovalJob
     displayName: "Manual Approval"
-    dependsOn: ${{ parameters.dependsOn }}
+    dependsOn: ${{ parameters.dependsOnJobs }}
     pool: server  # This runs on the server, not on an agent
     steps:
       - task: ManualValidation@0

@@ -235,7 +235,7 @@ parameters:
     default: 'ubuntu-latest'
     displayName: 'If Azure Pipelines is selected, which vmImage to run'
 
-  - name: dependsOn
+  - name: dependsOnJobs
     displayName: "Depends On"
     type: object
     default: [ ]
@@ -256,7 +256,7 @@ jobs:
       name: ${{ parameters.AzureDevOpsPoolName }}
       ${{ if eq(parameters.AzureDevOpsPoolName, 'Azure Pipelines') }}:
         vmImage: ${{ parameters.AzurePipelinesVmImage }}
-    dependsOn: ${{ parameters.dependsOn }}
+    dependsOn: ${{ parameters.dependsOnJobs }}
     workspace:
       clean: ${{ parameters.WorkspaceClean }}
 
