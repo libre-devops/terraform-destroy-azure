@@ -189,5 +189,5 @@ inputs:
 
 runs:
   using: 'docker'
-  image: 'Dockerfile'
+  image: 'ghcr.io/libre-devops/terraform-azure-docker-gh-action/debian:2025-05'
   entrypoint: 'entrypoint.ps1'
