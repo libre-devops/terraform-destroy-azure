@@ -70,18 +70,35 @@ function Invoke-Checkov
 
     #── build --skip-check … if supplied ──────────────────────────────────
     $skipArgument = @()
-    if ( $CheckovSkipChecks.Trim())
+    if ($CheckovSkipChecks.Trim())
     {
         $list = ($CheckovSkipChecks -split ',') |
                 ForEach-Object { $_.Trim() } | Where-Object { $_ }
         if ($list)
         {
+            # Single DEBUG log with all checks as a formatted list
+            $msg = "Checkov will skip:`n"
+            foreach ($check in $list) {
+                $msg += "- $check`n"
+            }
+            _LogMessage -Level 'INFO' -Message $msg.TrimEnd() `
+                        -InvocationName $MyInvocation.MyCommand.Name
             $skipArgument = @('--skip-check', ($list -join ','))
         }
+        else
+        {
+            _LogMessage -Level 'DEBUG' -Message "No tests are being skipped." `
+                        -InvocationName $MyInvocation.MyCommand.Name
+        }
+    }
+    else
+    {
+        _LogMessage -Level 'DEBUG' -Message "No tests are being skipped." `
+                    -InvocationName $MyInvocation.MyCommand.Name
     }
 
     #── base Checkov arguments ─────────────────────────────────────────────
-    $checkovArgs = @(     # short output
+    $checkovArgs = @(
         '-f', $planPath
         '--repo-root-for-plan-enrichment', $CodePath
         '--download-external-modules', 'false'
@@ -115,6 +132,7 @@ function Invoke-Checkov
         throw "Checkov failed (exit $code)."
     }
 }
+
 
 Export-ModuleMember -Function `
     Invoke-Checkov, `
