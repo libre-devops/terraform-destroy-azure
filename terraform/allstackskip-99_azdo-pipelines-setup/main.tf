@@ -1,6 +1,6 @@
 locals {
   envs = {
-    dev  = "Development"
+    dev = "Development"
   }
   repo_name      = split("/", var.repository_url)[4]
   project        = local.repo_name
