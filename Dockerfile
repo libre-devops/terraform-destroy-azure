@@ -114,7 +114,6 @@ RUN rm -rf ~/.cache /home/${NORMAL_USER}/.cache
 COPY entrypoint.ps1 /home/${NORMAL_USER}/entrypoint.ps1
 RUN chmod +x /home/${NORMAL_USER}/entrypoint.ps1
 
-# Set default entrypoint (works for local runs, GH Actions will override if set in action.yml)
 ENTRYPOINT ["pwsh", "/home/builder/entrypoint.ps1"]
 
 SHELL ["pwsh", "-Command"]
