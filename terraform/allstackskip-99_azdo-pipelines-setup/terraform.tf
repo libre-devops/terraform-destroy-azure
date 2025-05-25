@@ -5,5 +5,5 @@ terraform {
       source = "microsoft/azuredevops"
     }
   }
-  backend "azurerm" {}
+  backend "local" {} # throwaway
 }
