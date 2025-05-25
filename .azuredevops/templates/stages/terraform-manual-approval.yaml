@@ -28,6 +28,7 @@ stages:
   - stage: ManualApprovalStage
     displayName: "Manual Approval"
     dependsOn: ${{ parameters.dependsOn }}
+    pool: server
     jobs:
       - template: ../jobs/terraform-manual-approval.yaml  # Adjust path as needed
         parameters:
