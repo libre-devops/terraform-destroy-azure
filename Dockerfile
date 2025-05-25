@@ -22,7 +22,6 @@ RUN useradd -ms /bin/bash ${NORMAL_USER} \
     && mkdir -p /home/linuxbrew \
     && chown -R ${NORMAL_USER}:${NORMAL_USER} /home/linuxbrew \
     && apt-get update \
-    && apt-get dist-upgrade -y \
     && apt-get install -y --no-install-recommends \
     apt-transport-https \
     bash \
