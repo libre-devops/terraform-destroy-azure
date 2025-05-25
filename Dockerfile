@@ -1,6 +1,6 @@
 FROM ubuntu:24.04
 
-LABEL org.opencontainers.image.title=ubuntu
+LABEL org.opencontainers.image.title=base
 LABEL org.opencontainers.image.source=https://github.com/libre-devops/terraform-azure-docker-gh-action
 
 ARG NORMAL_USER=builder
