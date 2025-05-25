@@ -1,9 +1,9 @@
 #!/usr/bin/env pwsh
 
-
 param()
 
-# Helper function: Get input or default (GitHub Actions passes env vars as INPUT_<UPPER_SNAKE>)
+$ErrorActionPreference = 'Stop'
+
 function Get-ActionInput {
     param(
         [string]$name,
@@ -50,24 +50,18 @@ $UseAzureOidcLogin                          = Get-ActionInput 'use-azure-oidc-lo
 $UseAzureUserLogin                          = Get-ActionInput 'use-azure-user-login'                        'false'
 $UseAzureManagedIdentityLogin               = Get-ActionInput 'use-azure-managed-identity-login'            'false'
 $UseAzureServiceConnection                  = Get-ActionInput 'use-azure-service-connection'                'true'
-$InstallTenvTerraform                       = Get-ActionInput 'install-tenv-terraform'                      'false'
-$InstallAzureCli                             = Get-ActionInput 'install-azure-cli'                           'false'
-$AttemptAzureLogin                           = Get-ActionInput 'attempt-azure-login'                         'false'
-$InstallCheckov                              = Get-ActionInput 'install-checkov'                             'false'
-
-# You can add additional parameter mappings here if you add more to action.yml
+$InstallTenvTerraform                      = Get-ActionInput 'install-tenv-terraform'                      'false'
+$InstallAzureCli                           = Get-ActionInput 'install-azure-cli'                           'false'
+$AttemptAzureLogin                         = Get-ActionInput 'attempt-azure-login'                         'false'
+$InstallCheckov                            = Get-ActionInput 'install-checkov'                             'false'
 
 Write-Host "🏗️  Starting Libre DevOps Terraform Action..."
-
-# Print important vars (optional, for debugging)
 Write-Host "TerraformCodeLocation: $TerraformCodeLocation"
 Write-Host "TerraformStackToRunJson: $TerraformStackToRunJson"
 Write-Host "TerraformWorkspace: $TerraformWorkspace"
 Write-Host "TerraformVersion: $TerraformVersion"
 Write-Host "DebugMode: $DebugMode"
 
-# Now run your main script with these parameters
-# Using splatting for clarity (you can call with explicit arguments instead if you prefer)
 $ScriptParams = @{
     TerraformCodeLocation                    = $TerraformCodeLocation
     TerraformStackToRunJson                  = $TerraformStackToRunJson
@@ -102,18 +96,13 @@ $ScriptParams = @{
     UseAzureManagedIdentityLogin             = $UseAzureManagedIdentityLogin
     UseAzureServiceConnection                = $UseAzureServiceConnection
     InstallTenvTerraform                     = $InstallTenvTerraform
-    InstallAzureCli                           = $InstallAzureCli
-    AttemptAzureLogin                         = $AttemptAzureLogin
-    InstallCheckov                            = $InstallCheckov
+    InstallAzureCli                          = $InstallAzureCli
+    AttemptAzureLogin                        = $AttemptAzureLogin
+    InstallCheckov                           = $InstallCheckov
 }
 
-# Invoke the main script
-& ./Run-AzTerraform.ps1 @ScriptParams
-$LASTEXITCODE = $?
-
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "✅ Libre DevOps Terraform Action completed successfully."
-} else {
-    Write-Host "❌ Libre DevOps Terraform Action failed with exit code $LASTEXITCODE"
-    exit $LASTEXITCODE
+try {
+    & ./Run-AzTerraform.ps1 @ScriptParams
+} catch {
+    throw "Libre DevOps Terraform Action failed: $($_.Exception.Message)"
 }
