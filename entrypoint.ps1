@@ -17,6 +17,10 @@ function Get-ActionInput {
     return $default
 }
 
+Write-Host "===== DEBUG: Dumping all INPUT_* env vars ====="
+Get-ChildItem env: | Where-Object { $_.Name -like 'INPUT_*' } | Sort-Object Name | ForEach-Object { Write-Host "$($_.Name) = $($_.Value)" }
+Write-Host "===== END DEBUG ====="
+
 # Map all inputs from action.yml (use the kebab-case name)
 $TerraformCodeLocation                      = Get-ActionInput 'terraform-code-location'                     'terraform'
 $TerraformStackToRunJson                    = Get-ActionInput 'terraform-stack-to-run-json'                 '["all"]'
