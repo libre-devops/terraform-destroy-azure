@@ -245,7 +245,7 @@ parameters:
       - "resources"
 
 jobs:
-  - job: TerraformInitPlanDestory
+  - job: TerraformInitPlanDestroy
     displayName: "Terraform Init & Terraform Plan -destroy"
     pool:
       name: ${{ parameters.AzureDevOpsPoolName }}
