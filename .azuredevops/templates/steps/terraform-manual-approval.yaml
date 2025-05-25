@@ -3,8 +3,6 @@ parameters:
     type: string
     default: ""
 
-pool: server
-
 steps:
 
   - task: ManualIntervention@8
