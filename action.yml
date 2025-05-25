@@ -1,0 +1,193 @@
+name: 'Libre DevOps - Run Terraform for Azure - Docker GitHub Action'
+description: 'The heavily opinionated Libre DevOps Action to run Terraform and related tasks, targeting Azure environments.'
+author: "Craig Thacker <craig@craigthacker.dev>"
+branding:
+  icon: 'terminal'
+  color: 'green'
+
+inputs:
+  terraform-code-location:
+    description: 'The root folder path where your Terraform code is located.'
+    required: false
+    default: 'terraform'
+
+  terraform-stack-to-run-json:
+    description: 'A JSON array of stack names/folders to run (e.g., ["all"], ["rg"], ["network"]).'
+    required: false
+    default: '["all"]'
+
+  terraform-workspace:
+    description: 'The Terraform workspace to use or create (if empty, defaults to default workspace).'
+    required: false
+    default: ''
+
+  run-terraform-init:
+    description: 'Whether to run "terraform init" before plan/apply.'
+    required: false
+    default: 'true'
+
+  run-terraform-validate:
+    description: 'Whether to run "terraform validate" after init.'
+    required: false
+    default: 'true'
+
+  run-terraform-plan:
+    description: 'Whether to run "terraform plan".'
+    required: false
+    default: 'true'
+
+  run-terraform-plan-destroy:
+    description: 'Whether to run "terraform plan -destroy".'
+    required: false
+    default: 'false'
+
+  run-terraform-apply:
+    description: 'Whether to run "terraform apply" after a successful plan.'
+    required: false
+    default: 'false'
+
+  run-terraform-destroy:
+    description: 'Whether to run "terraform destroy".'
+    required: false
+    default: 'false'
+
+  terraform-init-create-backend-state-file-name:
+    description: 'If true, auto-generates a backend state file name per stack.'
+    required: false
+    default: 'true'
+
+  terraform-init-create-backend-state-file-prefix:
+    description: 'Prefix to prepend to the generated backend state file name.'
+    required: false
+    default: ''
+
+  terraform-init-create-backend-state-file-suffix:
+    description: 'Suffix to append to the generated backend state file name.'
+    required: false
+    default: ''
+
+  terraform-init-extra-args-json:
+    description: 'A JSON array of extra arguments for "terraform init".'
+    required: false
+    default: '[ ]'
+
+  terraform-plan-extra-args-json:
+    description: 'A JSON array of extra arguments for "terraform plan".'
+    required: false
+    default: '[ ]'
+
+  terraform-plan-destroy-extra-args-json:
+    description: 'A JSON array of extra arguments for "terraform plan -destroy".'
+    required: false
+    default: '[ ]'
+
+  terraform-apply-extra-args-json:
+    description: 'A JSON array of extra arguments for "terraform apply".'
+    required: false
+    default: '[ ]'
+
+  terraform-destroy-extra-args-json:
+    description: 'A JSON array of extra arguments for "terraform destroy".'
+    required: false
+    default: '[ ]'
+
+  debug-mode:
+    description: 'Enable verbose debug logging (set to "true" for troubleshooting).'
+    required: false
+    default: 'false'
+
+  delete-plan-files:
+    description: 'Delete the plan files after execution (recommended for CI/CD).'
+    required: false
+    default: 'true'
+
+  terraform-version:
+    description: 'The Terraform version to use (e.g., "latest", "1.6.5").'
+    required: false
+    default: 'latest'
+
+  run-checkov:
+    description: 'Whether to run Checkov security scan on the plan.'
+    required: false
+    default: 'true'
+
+  checkov-skip-check:
+    description: 'Comma-separated list of Checkov check IDs to skip.'
+    required: false
+    default: ''
+
+  checkov-softfail:
+    description: 'Continue pipeline even if Checkov finds issues (set to "true" to soft-fail).'
+    required: false
+    default: 'false'
+
+  checkov-extra-args-json:
+    description: 'A JSON array of extra arguments for Checkov.'
+    required: false
+    default: '[ ]'
+
+  terraform-plan-file-name:
+    description: 'The filename for the Terraform plan output (default: tfplan.plan).'
+    required: false
+    default: 'tfplan.plan'
+
+  terraform-destroy-plan-file-name:
+    description: 'The filename for the Terraform destroy plan output (default: tfplan-destroy.plan).'
+    required: false
+    default: 'tfplan-destroy.plan'
+
+  create-terraform-workspace:
+    description: 'If true, create or select the Terraform workspace.'
+    required: false
+    default: 'true'
+
+  use-azure-client-secret-login:
+    description: 'Enable Azure Client Secret login (SPN auth).'
+    required: false
+    default: 'false'
+
+  use-azure-oidc-login:
+    description: 'Enable Azure OIDC login (recommended for GitHub Actions).'
+    required: false
+    default: 'true'
+
+  use-azure-user-login:
+    description: 'Enable interactive user/device code login for Azure.'
+    required: false
+    default: 'false'
+
+  use-azure-managed-identity-login:
+    description: 'Enable Azure Managed Identity login.'
+    required: false
+    default: 'false'
+
+  use-azure-service-connection:
+    description: 'Enable Azure DevOps service connection (for compatibility, rarely needed in GitHub Actions).'
+    required: false
+    default: 'true'
+
+  install-tenv-terraform:
+    description: 'Install and manage Terraform with tenv.'
+    required: false
+    default: 'false'
+
+  install-azure-cli:
+    description: 'Install Azure CLI in the container.'
+    required: false
+    default: 'false'
+
+  attempt-azure-login:
+    description: 'Attempt Azure login in the script (set to true to try, usually not needed for OIDC).'
+    required: false
+    default: 'false'
+
+  install-checkov:
+    description: 'Install Checkov in the container.'
+    required: false
+    default: 'false'
+
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  entrypoint: 'entrypoint.ps1'

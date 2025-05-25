@@ -1,4 +1,4 @@
-name: 'Run Docker - Windows Server Core 2022'
+name: 'Run Docker - Ubuntu'
 
 # Allow run manually
 on:
@@ -9,7 +9,7 @@ on:
       working_directory:
         type: string
         description: What working directory should be passed to the script
-        default: "containers/windows-server2022"
+        default: "github_workspace"
       build_context:
         type: string
         description: "The context of the build"
@@ -17,7 +17,7 @@ on:
       docker_image_name:
         type: string
         description: 'Docker Image name?'
-        default: "terraform-azure-azdo-pipeline-templates/windowsserver2022"
+        default: "terraform-azure-docker-gh-action/ubuntu-action"
       enable_debug_mode:
         type: boolean
         description: 'Whether debug mode should be enable for within the script'
@@ -36,9 +36,9 @@ on:
         default: 'true'
 
 jobs:
-  run-script:
-    name: 'Run Script'
-    runs-on: windows-latest
+  run-docker-build:
+    name: 'Run Docker Build Script'
+    runs-on: ubuntu-latest
 
     defaults:
       run:
@@ -48,7 +48,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Build
-        id: run-script
+        id: run-docker-build
         shell: pwsh
         run: |
           if ("${{ inputs.working_directory }}" -eq "github_workspace") 
