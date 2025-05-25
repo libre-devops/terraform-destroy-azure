@@ -76,11 +76,6 @@ parameters:
     default: 'ubuntu-latest'
     displayName: 'If Azure Pipelines is selected, which vmImage to run'
 
-  - name: dependsOn
-    displayName: "Depends On"
-    type: object
-    default: [ ]
-
 resources:
   repositories:
     - repository: githubTemplates
@@ -106,9 +101,10 @@ stages:
       TerraformInitExtraArgsJson: ${{ parameters.TerraformInitExtraArgsJson }}
       TerraformPlanExtraArgsJson: ${{ parameters.TerraformPlanExtraArgsJson }}
       AzureDevOpsPoolName: ${{ parameters.AzureDevOpsPoolName }}
-      dependsOn: ${{ parameters.dependsOn }}
 
   - template: .azuredevops/templates/stages/terraform-manual-approval.yaml@githubTemplates
+    parameters:
+      dependsOn: [TerraformInitPlanStage]
 
   - template: .azuredevops/templates/stages/terraform-init-plan-apply.yaml@githubTemplates
     parameters:
@@ -121,4 +117,4 @@ stages:
       TerraformInitExtraArgsJson: ${{ parameters.TerraformInitExtraArgsJson }}
       TerraformPlanExtraArgsJson: ${{ parameters.TerraformPlanExtraArgsJson }}
       AzureDevOpsPoolName: ${{ parameters.AzureDevOpsPoolName }}
-      dependsOn: ${{ parameters.dependsOn }}
+      dependsOn: [ManualApprovalStage]
