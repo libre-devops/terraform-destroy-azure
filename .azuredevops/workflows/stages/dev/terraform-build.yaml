@@ -1,4 +1,4 @@
-name: terraform-init-build.yaml-$(Build.DefinitionName)-$(date:yyyyMMdd)$(rev:.r)
+name: terraform-build.yaml-$(Build.DefinitionName)-$(date:yyyyMMdd)$(rev:.r)
 
 trigger: none
 
@@ -57,11 +57,6 @@ parameters:
       ]
     displayName: 'Extra Args for terraform init'
 
-  - name: TerraformPlanExtraArgsJson
-    type: string
-    default: '[ ]'
-    displayName: 'Extra Args for terraform plan'
-
   - name: AzureDevOpsPoolName
     type: string
     default: "vmss-libd-uks-dev-02"
@@ -70,11 +65,6 @@ parameters:
       - "Azure Pipelines"
       - "vmss-libd-uks-dev-02"
     displayName: 'The Pool Name for the Job to run on'
-
-  - name: AzurePipelinesVmImage
-    type: string
-    default: 'ubuntu-latest'
-    displayName: 'If Azure Pipelines is selected, which vmImage to run'
 
 resources:
   repositories:
@@ -97,7 +87,6 @@ stages:
       CheckovSkipCheck: ${{ parameters.CheckovSkipCheck }}
       DebugMode: ${{ parameters.DebugMode }}
       TerraformInitExtraArgsJson: ${{ parameters.TerraformInitExtraArgsJson }}
-      TerraformPlanExtraArgsJson: ${{ parameters.TerraformPlanExtraArgsJson }}
       AzureDevOpsPoolName: ${{ parameters.AzureDevOpsPoolName }}
 
   - template: .azuredevops/templates/stages/terraform-manual-approval.yaml@githubTemplates
@@ -113,6 +102,5 @@ stages:
       CheckovSkipCheck: ${{ parameters.CheckovSkipCheck }}
       DebugMode: ${{ parameters.DebugMode }}
       TerraformInitExtraArgsJson: ${{ parameters.TerraformInitExtraArgsJson }}
-      TerraformPlanExtraArgsJson: ${{ parameters.TerraformPlanExtraArgsJson }}
       AzureDevOpsPoolName: ${{ parameters.AzureDevOpsPoolName }}
       dependsOnStages: [ ManualApprovalStage ]

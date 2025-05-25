@@ -1,4 +1,4 @@
-name: terraform-build.yaml-$(Build.DefinitionName)-$(date:yyyyMMdd)$(rev:.r)
+name: terraform-destroy.yaml-$(Build.DefinitionName)-$(date:yyyyMMdd)$(rev:.r)
 
 trigger: none
 
@@ -78,7 +78,7 @@ variables:
   - group: terraform-${{ parameters.TerraformWorkspace }}-vars
 
 jobs:
-  - template: .azuredevops/templates/jobs/terraform-init-plan.yaml@githubTemplates
+  - template: .azuredevops/templates/jobs/terraform-init-plan-destroy.yaml@githubTemplates
     parameters:
       ServiceConnection: ${{ parameters.ServiceConnection }}
       TerraformCodeLocation: ${{ parameters.TerraformCodeLocation }}
@@ -93,7 +93,7 @@ jobs:
     parameters:
       dependsOnJobs: [ TerraformInitPlanJob ]
 
-  - template: .azuredevops/templates/jobs/terraform-init-plan-apply.yaml@githubTemplates
+  - template: .azuredevops/templates/jobs/terraform-init-plan-destroy-apply.yaml@githubTemplates
     parameters:
       ServiceConnection: ${{ parameters.ServiceConnection }}
       TerraformCodeLocation: ${{ parameters.TerraformCodeLocation }}
