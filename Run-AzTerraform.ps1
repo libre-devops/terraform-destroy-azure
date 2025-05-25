@@ -25,7 +25,7 @@ param (
     [string]$TerraformPlanFileName = "tfplan.plan",
     [string]$TerraformDestroyPlanFileName = "tfplan-destroy.plan",
     [string]$TerraformCodeLocation = "terraform",
-    [string]$TerraformStackToRunJson = '["rg"]', # JSON format Use 'all' to run 0_, 1_, etc and destroy in reverse order 1_, 0_ etc
+    [string]$TerraformStackToRunJson = '["all"]', # JSON format Use 'all' to run 0_, 1_, etc and destroy in reverse order 1_, 0_ etc
     [string]$CreateTerraformWorkspace = "true",
     [string]$TerraformWorkspace = "dev",
     [string]$InstallAzureCli = "false",

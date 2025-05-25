@@ -45,7 +45,6 @@ function Get-TerraformStackFolders
         [string[]]$StacksToRun
     )
 
-    #─────────────────────────────────── pre-checks ────────────────────────────
     if (-not (Test-Path $CodeRoot))
     {
         _LogMessage -Level 'ERROR' -Message "Code root not found: $CodeRoot" `
@@ -53,9 +52,7 @@ function Get-TerraformStackFolders
         throw "Code root not found: $CodeRoot"
     }
 
-    # Match folders like 0_rg or 0-rg or allstackskip_99-azdo-pipelines-setup
-    $allDirs = Get-ChildItem -Path $CodeRoot -Directory |
-            Where-Object { $_.Name -match '^\d+[-_].+' -or $_.Name -match '^allstackskip[-_].+' }
+    $allDirs = Get-ChildItem -Path $CodeRoot -Directory
 
     if (-not $allDirs)
     {
@@ -64,7 +61,6 @@ function Get-TerraformStackFolders
         throw "No stack folders found underneath $CodeRoot"
     }
 
-    #──────────────────────────── discover / index stacks ─────────────────────
     $stackLookup = @{ }
     foreach ($dir in $allDirs)
     {
@@ -73,25 +69,33 @@ function Get-TerraformStackFolders
             $stackLookup[$matches.name.ToLower()] = @{
                 Path = $dir.FullName
                 Order = [int]$matches.order
+                IsNumbered = $true
             }
         }
         elseif ($dir.Name -match '^allstackskip[-_](?<rest>.+)$')
         {
-            # Remove leading number/underscore from rest if present
             $stackName = $matches.rest -replace '^\d+[-_]', ''
             $stackLookup[$stackName.ToLower()] = @{
                 Path = $dir.FullName
                 Order = 9999
                 IsStackSkip = $true
+                IsNumbered = $false
+            }
+        }
+        else
+        {
+            $stackLookup[$dir.Name.ToLower()] = @{
+                Path = $dir.FullName
+                Order = 9999
+                IsNumbered = $false
             }
         }
     }
 
-    #──────────────────────────── argument sanitisation ────────────────────────
     $requested = @(
     $StacksToRun |
             ForEach-Object { $_.Trim() } |
-            Where-Object  { $_ }         # drop empty entries
+            Where-Object  { $_ }
     )
 
     if ($requested -contains 'all' -and $requested.Count -gt 1)
@@ -103,7 +107,6 @@ function Get-TerraformStackFolders
         $requested = $requested | Where-Object { $_.ToLower() -ne 'all' }
     }
 
-    #──────────────────────────── resolve stack list ───────────────────────────
     $result = [System.Collections.Generic.List[string]]::new()
 
     if (($requested.Count -eq 1) -and ($requested[0].ToLower() -eq 'all'))
@@ -112,11 +115,8 @@ function Get-TerraformStackFolders
                     -InvocationName $MyInvocation.MyCommand.Name
 
         $stackLookup.GetEnumerator() |
+                Where-Object { $_.Value.IsNumbered -eq $true -and (-not ($_.Value.PSObject.Properties['IsStackSkip'] -and $_.Value.IsStackSkip)) } |
                 Sort-Object { $_.Value.Order } |
-                Where-Object {
-                    $folderName = Split-Path -Path $_.Value.Path -Leaf
-                    $folderName -notmatch '^allstackskip[-_]'
-                } |
                 ForEach-Object { [void]$result.Add($_.Value.Path) }
     }
     else
@@ -134,13 +134,13 @@ function Get-TerraformStackFolders
         }
     }
 
-    #────────────────────────────────── debug log ──────────────────────────────
     _LogMessage -Level 'DEBUG' `
         -Message "Stack execution order → $( $result -join ', ' )" `
         -InvocationName $MyInvocation.MyCommand.Name
 
     return $result
 }
+
 
 
 ###############################################################################
