@@ -5,7 +5,7 @@ parameters:
 
 steps:
 
-  - task: ManualIntervention@8
+  - task: ManualValidation@0
     name: "ManualApproval"
     timeoutInMinutes: 60
     inputs:
