@@ -55,7 +55,7 @@ function Get-TerraformStackFolders
 
     # Match folders like 0_rg or 0-rg or stackskip_99-azdo-pipelines-setup
     $allDirs = Get-ChildItem -Path $CodeRoot -Directory |
-            Where-Object { $_.Name -match '^\d+[-_].+' -or $_.Name -match '^stackskip[-_].+' }
+            Where-Object { $_.Name -match '^\d+[-_].+' -or $_.Name -match '^allstackskip[-_].+' }
 
     if (-not $allDirs)
     {
@@ -68,7 +68,7 @@ function Get-TerraformStackFolders
     $stackLookup = @{ }
     foreach ($dir in $allDirs)
     {
-        # Add support for stackskip- and stackskip_
+        # Add support for allstackskip- and allstackskip_
         if ($dir.Name -match '^(?<order>\d+)[-_](?<name>.+)$')
         {
             $stackLookup[$matches.name.ToLower()] = @{
@@ -76,7 +76,7 @@ function Get-TerraformStackFolders
                 Order = [int]$matches.order
             }
         }
-        elseif ($dir.Name -match '^stackskip[-_](?<name>.+)$')
+        elseif ($dir.Name -match '^allstackskip[-_](?<name>.+)$')
         {
             # Use high order so that explicit calls work, but 'all' can filter out easily
             $stackLookup[$matches.name.ToLower()] = @{
