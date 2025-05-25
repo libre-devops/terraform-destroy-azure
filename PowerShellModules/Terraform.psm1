@@ -78,6 +78,7 @@ function Get-TerraformStackFolders
         }
         elseif ($dir.Name -match '^allstackskip[-_](?<name>.+)$')
         {
+            _LogMessage -Level 'DEBUG' -Message "Detected skip folder: $($dir.Name) → will only be included when explicitly requested." -InvocationName $MyInvocation.MyCommand.Name
             # Use high order so that explicit calls work, but 'all' can filter out easily
             $stackLookup[$matches.name.ToLower()] = @{
                 Path  = $dir.FullName
@@ -115,7 +116,7 @@ function Get-TerraformStackFolders
                 Sort-Object { $_.Value.Order } |
                 Where-Object {
                     $folderName = Split-Path -Path $_.Value.Path -Leaf
-                    $folderName -notmatch '^allstackskip[-_]'  # <--- Hard exclusion for allstackskip
+                    $folderName -notmatch '^allstackskip[-_]'
                 } |
                 ForEach-Object { [void]$result.Add($_.Value.Path) }
     }
@@ -141,8 +142,6 @@ function Get-TerraformStackFolders
 
     return $result
 }
-
-
 
 
 ###############################################################################
