@@ -41,7 +41,7 @@ parameters:
   - name: RunTerraformApply
     type: string
     values: [ "true", "false" ]
-    default: "false"
+    default: "true"
     displayName: 'Run Terraform Apply'
 
   - name: RunTerraformDestroy
