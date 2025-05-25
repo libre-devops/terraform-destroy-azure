@@ -109,7 +109,7 @@ RUN tenv tf install latest --verbose && \
     tenv tf use latest --verbose
 
 # Clean up cache as normal user
-RUN rm -rf /tmp/* /var/tmp/* ~/.cache /home/${NORMAL_USER}/.cache
+RUN rm -rf ~/.cache /home/${NORMAL_USER}/.cache
 
 COPY entrypoint.ps1 /home/${NORMAL_USER}/entrypoint.ps1
 RUN chmod +x /home/${NORMAL_USER}/entrypoint.ps1
