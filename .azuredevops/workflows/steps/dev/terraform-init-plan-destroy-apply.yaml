@@ -25,7 +25,7 @@ parameters:
     values:
       - '["rg"]'
       - '["network"]'
-      - '["azdo-pipeline-setup"]'
+      - '["azdo-pipelines-setup"]'
       - '["rg", "network"]'
       - '["all"]'
     displayName: 'Terraform Stacks to Run'
