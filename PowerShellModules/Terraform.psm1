@@ -53,7 +53,7 @@ function Get-TerraformStackFolders
         throw "Code root not found: $CodeRoot"
     }
 
-    # Match folders like 0_rg or 0-rg or stackskip_99-azdo-pipelines-setup
+    # Match folders like 0_rg or 0-rg or allstackskip_99-azdo-pipelines-setup
     $allDirs = Get-ChildItem -Path $CodeRoot -Directory |
             Where-Object { $_.Name -match '^\d+[-_].+' -or $_.Name -match '^allstackskip[-_].+' }
 
@@ -113,8 +113,11 @@ function Get-TerraformStackFolders
 
         $stackLookup.GetEnumerator() |
                 Sort-Object { $_.Value.Order } |
-                Where-Object { -not ($_.Value.PSObject.Properties['IsStackSkip'] -and $_.Value.IsStackSkip) } | # Skip stackskip folders
-        ForEach-Object { [void]$result.Add($_.Value.Path) }
+                Where-Object {
+                    $folderName = Split-Path -Path $_.Value.Path -Leaf
+                    $folderName -notmatch '^allstackskip[-_]'  # <--- Hard exclusion for allstackskip
+                } |
+                ForEach-Object { [void]$result.Add($_.Value.Path) }
     }
     else
     {
@@ -138,6 +141,7 @@ function Get-TerraformStackFolders
 
     return $result
 }
+
 
 
 
