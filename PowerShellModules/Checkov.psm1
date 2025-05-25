@@ -81,8 +81,7 @@ function Invoke-Checkov
     }
 
     #── base Checkov arguments ─────────────────────────────────────────────
-    $checkovArgs = @(
-        '-s'                                         # short output
+    $checkovArgs = @(     # short output
         '-f', $planPath
         '--repo-root-for-plan-enrichment', $CodePath
         '--download-external-modules', 'false'
