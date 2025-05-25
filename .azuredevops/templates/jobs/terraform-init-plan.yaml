@@ -251,7 +251,7 @@ jobs:
     displayName: "Terraform Init & Terraform Plan"
     pool:
       name: ${{ parameters.AzureDevOpsPoolName }}
-      ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
+      ${{ if eq(parameters.AzureDevOpsPoolName, 'Azure Pipelines') }}:
         vmImage: ${{ parameters.AzurePipelinesVmImage }}
     dependsOn: ${{ parameters.dependsOn }}
     workspace:
