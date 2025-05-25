@@ -256,8 +256,8 @@ parameters:
       - "resources"
 
 stages:
-  - stage: TerraformInitPlan
-    displayName: "Terraform Init & Plan"
+  - stage: TerraformInitPlanStage
+    displayName: "Terraform Init & Terraform Plan"
     dependsOn: ${{ parameters.dependsOn }}
     ${{ if ne(length(parameters.additionalStageVars), 0) }}:
       variables:

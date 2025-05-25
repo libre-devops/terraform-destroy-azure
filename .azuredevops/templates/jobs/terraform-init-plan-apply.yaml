@@ -251,7 +251,7 @@ parameters:
       - "resources"
 
 jobs:
-  - job: TerraformInitPlanApply
+  - job: TerraformInitPlanApplyJob
     displayName: "Terraform Init, Terraform Plan & Terraform Apply"
     pool:
       name: ${{ parameters.AzureDevOpsPoolName }}

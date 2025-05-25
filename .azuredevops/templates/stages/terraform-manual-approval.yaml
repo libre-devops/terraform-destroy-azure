@@ -1,0 +1,38 @@
+parameters:
+  - name: NotifyUsers
+    type: string
+    displayName: 'Notify Users'
+    default: ''
+
+  - name: Instructions
+    type: string
+    default: 'Review the Terraform plan before applying.'
+    displayName: 'Instructions'
+
+  - name: TimeoutInMinutes
+    type: string
+    default: '60'
+    displayName: 'Timeout in Minutes'
+
+  - name: OnTimeout
+    type: string
+    default: 'reject'
+    displayName: 'On Timeout'
+
+  - name: dependsOn
+    type: object
+    default: []
+    displayName: 'Depends On'
+
+stages:
+  - stage: ManualApprovalStage
+    displayName: "Manual Approval"
+    dependsOn: ${{ parameters.dependsOn }}
+    jobs:
+      - template: ../jobs/manual-approval-job.yaml  # Adjust path as needed
+        parameters:
+          NotifyUsers: ${{ parameters.NotifyUsers }}
+          Instructions: ${{ parameters.Instructions }}
+          TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
+          OnTimeout: ${{ parameters.OnTimeout }}
+          dependsOn: ${{ parameters.dependsOn }}

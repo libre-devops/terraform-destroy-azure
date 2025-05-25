@@ -1,7 +1,7 @@
 resource "azuredevops_build_definition" "stages_init_plan" {
   for_each        = local.envs
   project_id      = data.azuredevops_project.target.id
-  name            = "${title(local.repo_name)} - Jobs - ${title(each.key)} - Terraform Init & Terraform Plan"
+  name            = "${title(local.repo_name)} - Stages - ${title(each.key)} - Terraform Init & Terraform Plan"
   path            = "${local.folders_path[each.key]}\\stages"
   agent_pool_name = "Default"
 
@@ -21,7 +21,7 @@ resource "azuredevops_build_definition" "stages_init_plan" {
 resource "azuredevops_build_definition" "stages_init_plan_apply" {
   for_each        = local.envs
   project_id      = data.azuredevops_project.target.id
-  name            = "${title(local.repo_name)} - Jobs - ${title(each.key)} - Terraform Init, Terraform Plan & Terraform Apply"
+  name            = "${title(local.repo_name)} - Stages - ${title(each.key)} - Terraform Init, Terraform Plan & Terraform Apply"
   path            = "${local.folders_path[each.key]}\\stages"
   agent_pool_name = "Default"
 
@@ -41,7 +41,7 @@ resource "azuredevops_build_definition" "stages_init_plan_apply" {
 resource "azuredevops_build_definition" "stages_init_plan_destroy" {
   for_each        = local.envs
   project_id      = data.azuredevops_project.target.id
-  name            = "${title(local.repo_name)} - Jobs - ${title(each.key)} - Terraform Init & Terraform Plan Destroy"
+  name            = "${title(local.repo_name)} - Stages - ${title(each.key)} - Terraform Init & Terraform Plan Destroy"
   path            = "${local.folders_path[each.key]}\\stages"
   agent_pool_name = "Default"
 
@@ -61,7 +61,7 @@ resource "azuredevops_build_definition" "stages_init_plan_destroy" {
 resource "azuredevops_build_definition" "stages_init_plan_destroy_apply" {
   for_each        = local.envs
   project_id      = data.azuredevops_project.target.id
-  name            = "${title(local.repo_name)} - Jobs - ${title(each.key)} - Terraform Init, Terraform Plan Destroy & Terraform Destroy"
+  name            = "${title(local.repo_name)} - Stages - ${title(each.key)} - Terraform Init, Terraform Plan Destroy & Terraform Destroy"
   path            = "${local.folders_path[each.key]}\\stages"
   agent_pool_name = "Default"
 
