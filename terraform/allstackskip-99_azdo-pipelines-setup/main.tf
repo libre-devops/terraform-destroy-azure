@@ -23,7 +23,7 @@ resource "azuredevops_build_definition" "init_plan" {
     repo_type             = "GitHub"
     repo_id               = "${var.github_org_name}/${var.github_project_name}"
     branch_name           = local.default_branch
-    yml_path              = ".azuredevops/${each.key}/steps/terraform-init-plan.yaml"
+    yml_path              = ".azuredevops/workflows/steps/${each.key}/terraform-init-plan.yaml"
     service_connection_id = data.azuredevops_serviceendpoint_github.github.id
   }
 }
@@ -43,7 +43,7 @@ resource "azuredevops_build_definition" "init_plan_apply" {
     repo_type             = "GitHub"
     repo_id               = "${var.github_org_name}/${var.github_project_name}"
     branch_name           = local.default_branch
-    yml_path              = ".azuredevops/${each.key}/steps/terraform-init-plan-apply.yaml"
+    yml_path              = ".azuredevops/workflows/steps/${each.key}/terraform-init-plan-apply.yaml"
     service_connection_id = data.azuredevops_serviceendpoint_github.github.id
   }
 }
@@ -63,7 +63,7 @@ resource "azuredevops_build_definition" "init_plan_destroy" {
     repo_type             = "GitHub"
     repo_id               = "${var.github_org_name}/${var.github_project_name}"
     branch_name           = local.default_branch
-    yml_path              = ".azuredevops/${each.key}/steps/terraform-init-plan-destroy.yaml"
+    yml_path              = ".azuredevops/workflows/steps/${each.key}/terraform-init-plan-destroy.yaml"
     service_connection_id = data.azuredevops_serviceendpoint_github.github.id
   }
 }
@@ -83,7 +83,7 @@ resource "azuredevops_build_definition" "init_plan_destroy_apply" {
     repo_type             = "GitHub"
     repo_id               = "${var.github_org_name}/${var.github_project_name}"
     branch_name           = local.default_branch
-    yml_path              = ".azuredevops/${each.key}/steps/terraform-init-plan-destroy-apply.yaml"
+    yml_path              = ".azuredevops/workflows/steps/${each.key}/terraform-init-plan-destroy-apply.yaml"
     service_connection_id = data.azuredevops_serviceendpoint_github.github.id
   }
 }
