@@ -226,7 +226,7 @@ steps:
   - task: AzureCLI@2
     displayName: 'Authenticate to Azure & set terraform environment variables'
     condition: eq(${{ parameters.UseAzureServiceConnection }}, 'true')
-    name: 'AzureLoginTerraformInitPlan'
+    name: 'AzureLoginTerraformInitPlanDestroyApply'
     inputs:
       azureSubscription: ${{ parameters.ServiceConnection }}
       scriptType: 'pscore'
@@ -304,8 +304,8 @@ steps:
           -InstallAzureCli                            '${{ parameters.InstallAzureCli }}' `
           -AttemptAzureLogin                          '${{ parameters.AttemptAzureLogin }}' `
           -InstallCheckov                             '${{ parameters.InstallCheckov }}'
-    name: RunAzTerraformInitPlan
-    displayName: 'Run Terraform init & Terraform plan'
+    name: RunAzTerraformInitPlanDestroyApply
+    displayName: 'Run Terraform init, Terraform plan -destroy & Terraform destroy'
     env:
       ${{ if eq(parameters.UseAzureServiceConnection, 'true') }}:
         # Always required with service connection
