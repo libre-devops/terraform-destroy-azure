@@ -91,7 +91,7 @@ variables:
   - group: terraform-${{ parameters.TerraformWorkspace }}-vars
 
 jobs:
-  - template: .azuredevops/templates/jobs/terraform-init-plan-job.yaml@githubTemplates
+  - template: .azuredevops/templates/jobs/terraform-init-plan.yaml@githubTemplates
     parameters:
       ServiceConnection: ${{ parameters.ServiceConnection }}
       TerraformCodeLocation: ${{ parameters.TerraformCodeLocation }}
