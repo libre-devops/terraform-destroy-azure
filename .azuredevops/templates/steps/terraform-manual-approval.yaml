@@ -7,7 +7,7 @@ pool: server
 
 steps:
 
-  - task: ManualValidation@0
+  - task: ManualIntervention@8
     name: "ManualApproval"
     timeoutInMinutes: 60
     inputs:
