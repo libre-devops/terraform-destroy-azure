@@ -255,8 +255,6 @@ jobs:
     workspace:
       clean: ${{ parameters.WorkspaceClean }}
     steps:
-      - checkout: self
-
       - template: ../steps/terraform-init-plan.yaml
         parameters:
           TerraformCodeLocation: ${{ parameters.TerraformCodeLocation }}
