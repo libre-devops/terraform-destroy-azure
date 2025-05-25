@@ -81,7 +81,7 @@ function Invoke-Checkov
             foreach ($check in $list) {
                 $msg += "- $check`n"
             }
-            _LogMessage -Level 'INFO' -Message $msg.TrimEnd() `
+            _LogMessage -Level 'DEBUG' -Message $msg.TrimEnd() `
                         -InvocationName $MyInvocation.MyCommand.Name
             $skipArgument = @('--skip-check', ($list -join ','))
         }
