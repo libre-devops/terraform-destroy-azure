@@ -184,7 +184,7 @@ parameters:
     default: "false"
     displayName: 'Install Checkov'
 
-  - name: serviceConnection
+  - name: ServiceConnection
     type: string
     displayName: 'Azure DevOps Service Connection Name'
 
@@ -212,7 +212,7 @@ steps:
     condition: eq(${{ parameters.UseAzureServiceConnection }}, 'true')
     name: 'AzureLogin'
     inputs:
-      azureSubscription: ${{ parameters.serviceConnection }}
+      azureSubscription: ${{ parameters.ServiceConnection }}
       scriptType: 'pscore'
       scriptLocation: inlineScript
       inlineScript: |

@@ -3,7 +3,7 @@ name: terraform-init-plan.yaml-$(Build.DefinitionName)-$(date:yyyyMMdd)$(rev:.r)
 trigger: none
 
 parameters:
-  - name: serviceConnection
+  - name: ServiceConnection
     type: string
     default: "spn-libd-uks-dev-mgmt-01-client-secret-enabled"
     displayName: 'Azure DevOps Service Connection'
@@ -90,5 +90,5 @@ steps:
       TerraformWorkspace: ${{ parameters.TerraformWorkspace }}
       CheckovSkipCheck: ${{ parameters.CheckovSkipCheck }}
       DebugMode: ${{ parameters.DebugMode }}
-      serviceConnection: ${{ parameters.serviceConnection }}
+      ServiceConnection: ${{ parameters.ServiceConnection }}
 
