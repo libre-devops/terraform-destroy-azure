@@ -269,6 +269,13 @@ try
         foreach ($folder in $stackFolders)
         {
             $processedStacks += $folder
+            _LogMessage -Level 'INFO' -Message "Resolved stack folders: $($stackFolders -join ', ')" -InvocationName $MyInvocation.MyCommand.Name
+
+            if ($folder -match "allstackskip[-_]") {
+                _LogMessage -Level 'WARN' -Message "Skipping folder $folder as it is marked with allstackskip." -InvocationName $MyInvocation.MyCommand.Name
+                continue
+            }
+
 
             # terraform fmt – always safe
             Invoke-TerraformFmtCheck  -CodePath $folder
