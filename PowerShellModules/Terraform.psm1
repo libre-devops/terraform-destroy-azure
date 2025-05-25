@@ -132,61 +132,70 @@ function Get-TerraformStackFolders
 ###############################################################################
 # Run `terraform init`
 ###############################################################################
-function Invoke-TerraformInit
-{
+function Invoke-TerraformInit {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)][string]$CodePath,
-
-    # Optional additional arguments, e.g. "-backend-config=xyz.tfbackend"
         [string[]]$InitArgs = @(),
         [bool]$CreateBackendKey = $false,
+        [string]$BackendKeyPrefix = $null,
+        [string]$BackendKeySuffix = $null,
         [string]$StackFolderName = $null
-
     )
 
     $inv = $MyInvocation.MyCommand.Name
     $orig = Get-Location
 
-    try
-    {
-        if (-not (Test-Path $CodePath))
-        {
+    try {
+        if (-not (Test-Path $CodePath)) {
             _LogMessage -Level 'ERROR' -Message "Terraform code not found: $CodePath" -InvocationName $inv
             throw "Terraform code not found: $CodePath"
         }
 
         Set-Location $CodePath
 
-        if ($CreateBackendKey -and $PSBoundParameters.ContainsKey('StackFolderName')) {
-            $folderName = Split-Path -Path $StackFolderName -Leaf
-            $backendKey = ($folderName -replace '_', '-') + ".terraform.tfstate"
-            _LogMessage -Level 'DEBUG' -Message "Computed backend key name: $backendKey" -InvocationName $MyInvocation.MyCommand.Name
+        # Determine if a backend key is already specified in InitArgs
+        $backendKeyPassed = $InitArgs | Where-Object { $_ -match '^-backend-config=key=' }
+
+        if ($CreateBackendKey -and (-not $backendKeyPassed)) {
+            # Auto-generate backend key
+            if ($StackFolderName) {
+                $folderName = Split-Path -Path $StackFolderName -Leaf
+            } else {
+                # Default to the last folder in CodePath if StackFolderName not provided
+                $folderName = Split-Path -Path $CodePath -Leaf
+            }
+
+            $backendKey = ""
+            if ($BackendKeyPrefix) { $backendKey += "$BackendKeyPrefix-" }
+            $backendKey += ($folderName -replace '_', '-')
+            if ($BackendKeySuffix) { $backendKey += "-$BackendKeySuffix" }
+            $backendKey += ".terraform.tfstate"
+
+            _LogMessage -Level 'DEBUG' -Message "Computed backend key name: $backendKey" -InvocationName $inv
 
             $InitArgs += "-backend-config=key=$backendKey"
         }
 
-        _LogMessage -Level 'INFO'  -Message "Running *terraform init ${InitArgs} * in: $CodePath" -InvocationName $inv
+        _LogMessage -Level 'INFO' -Message "Running *terraform init ${InitArgs}* in: $CodePath" -InvocationName $inv
 
         & terraform init @InitArgs
         $code = $LASTEXITCODE
         _LogMessage -Level 'DEBUG' -Message "terraform init exit-code: $code" -InvocationName $inv
 
-        if ($code -ne 0)
-        {
+        if ($code -ne 0) {
             throw "terraform init failed (exit $code)."
         }
     }
-    catch
-    {
+    catch {
         _LogMessage -Level 'ERROR' -Message $_.Exception.Message -InvocationName $inv
         throw
     }
-    finally
-    {
+    finally {
         Set-Location $orig
     }
 }
+
 
 ###############################################################################
 # Run `terraform workspace select -or-create=true <name>`

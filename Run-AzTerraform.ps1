@@ -1,11 +1,14 @@
 param (
     [string]$RunTerraformInit = "true",
+    [string]$RunTerraformValidate = "true",
     [string]$RunTerraformPlan = "true",
     [string]$RunTerraformPlanDestroy = "false",
     [string]$RunTerraformApply = "false",
     [string]$RunTerraformDestroy = "false",
     [string]$TerraformInitExtraArgsJson = '[]',
     [string]$TerraformInitCreateBackendStateFileName = "true",
+    [string]$TerraformInitCreateBackendStateFilePrefix = "",
+    [string]$TerraformInitCreateBackendStateFileSuffix = "",
     [string]$TerraformPlanExtraArgsJson = '[]',
     [string]$TerraformPlanDestroyExtraArgsJson = '[]',
     [string]$TerraformApplyExtraArgsJson = '[]',
@@ -126,8 +129,17 @@ try
     $convertedRunTerraformInit = ConvertTo-Boolean $RunTerraformInit
     _LogMessage -Level 'DEBUG' -Message "RunTerraformInit: `"$RunTerraformInit`" → $convertedRunTerraformInit" -InvocationName "$( $MyInvocation.MyCommand.Name )"
 
+    $convertedRunTerraformValidate = ConvertTo-Boolean $RunTerraformValiate
+    _LogMessage -Level 'DEBUG' -Message "RunTerraformValidate: `"$RunTerraformValidate`" → $convertedRunTerraformValidate" -InvocationName "$( $MyInvocation.MyCommand.Name )"
+
     $convertedTerraformInitCreateBackendStateFileName = ConvertTo-Boolean $TerraformInitCreateBackendStateFileName
     _LogMessage -Level 'DEBUG' -Message "TerraformInitCreateBackendStateFileName: `"$TerraformInitCreateBackendStateFileName`" → $convertedTerraformInitCreateBackendStateFileName" -InvocationName "$( $MyInvocation.MyCommand.Name )"
+
+    $convertedTerraformInitCreateBackendStateFilePrefix = ConvertTo-Null $TerraformInitCreateBackendStateFilePrefix
+    _LogMessage -Level 'DEBUG' -Message "TerraformInitCreateBackendStateFilePrefix: `"$TerraformInitCreateBackendStateFilePrefix`" → $convertedTerraformInitCreateBackendStateFilePrefix" -InvocationName "$( $MyInvocation.MyCommand.Name )"
+
+    $convertedTerraformInitCreateBackendStateFileSuffix = ConvertTo-Null $TerraformInitCreateBackendStateFileSuffix
+    _LogMessage -Level 'DEBUG' -Message "TerraformInitCreateBackendStateFileSuffix: `"$TerraformInitCreateBackendStateFilePrefix`" → $convertedTerraformInitCreateBackendStateFileSuffix" -InvocationName "$( $MyInvocation.MyCommand.Name )"
 
     $convertedRunTerraformPlan = ConvertTo-Boolean $RunTerraformPlan
     _LogMessage -Level 'DEBUG' -Message "RunTerraformPlan: `"$RunTerraformPlan`" → $convertedRunTerraformPlan" -InvocationName "$( $MyInvocation.MyCommand.Name )"
@@ -256,20 +268,30 @@ try
 
         foreach ($folder in $stackFolders)
         {
-
             $processedStacks += $folder
 
             # terraform fmt – always safe
             Invoke-TerraformFmtCheck  -CodePath $folder
 
             # ── INIT ──────────────────────────────────────────────────────────────
-            if ($convertedRunTerraformInit -and $convertedTerraformInitCreateBackendStateFileName)
+            if ($convertedRunTerraformInit)
             {
-                Invoke-TerraformInit -CodePath $folder -InitArgs $TerraformInitExtraArgs -CreateBackendKey $convertedTerraformInitCreateBackendStateFileName -StackFolderName $folder
-            }
-            else
-            {
-                Invoke-TerraformInit -CodePath $folder -InitArgs $TerraformInitExtraArgs
+                if ($convertedTerraformInitCreateBackendStateFileName)
+                {
+                    Invoke-TerraformInit `
+                        -CodePath $folder `
+                        -InitArgs $TerraformInitExtraArgs `
+                        -CreateBackendKey $convertedTerraformInitCreateBackendStateFileName `
+                        -StackFolderName $folder `
+                        -BackendKeyPrefix $convertedTerraformInitCreateBackendStateFilePrefix `
+                        -BackendKeySuffix $convertedTerraformInitCreateBackendStateFileSuffix
+                }
+                else
+                {
+                    Invoke-TerraformInit `
+                        -CodePath $folder `
+                        -InitArgs $TerraformInitExtraArgs
+                }
             }
 
             # workspace (needs an init first)
@@ -282,7 +304,7 @@ try
             }
 
             # ── VALIDATE ──────────────────────────────────────────────────────────
-            if ($convertedRunTerraformInit)
+            if ($convertedRunTerraformInit -and $convertedRunTerraformValidate)
             {
                 Invoke-TerraformValidate -CodePath $folder
             }
@@ -316,10 +338,10 @@ try
                 if ($convertedRunCheckov -and $convertedRunTerraformPlan)
                 {
                     Invoke-Checkov `
-                -CodePath           $folder `
-                -CheckovSkipChecks  $CheckovSkipCheck `
-                -ExtraArgs          $CheckovExtraArgs `
-                -SoftFail:          $convertedCheckovSoftfail
+                        -CodePath           $folder `
+                        -CheckovSkipChecks  $CheckovSkipCheck `
+                        -ExtraArgs          $CheckovExtraArgs `
+                        -SoftFail:          $convertedCheckovSoftfail
                 }
             }
 
@@ -401,4 +423,3 @@ finally
     $Env:TF_LOG = $null
     Set-Location $currentWorkingDirectory
 }
-

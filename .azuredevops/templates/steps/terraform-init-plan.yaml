@@ -20,6 +20,12 @@ parameters:
     default: "true"
     displayName: 'Run Terraform Init'
 
+  - name: RunTerraformValidate
+    type: string
+    values: [ "true", "false" ]
+    default: "true"
+    displayName: 'Run Terraform Init'
+
   - name: RunTerraformPlan
     type: string
     values: [ "true", "false" ]
@@ -49,6 +55,16 @@ parameters:
     values: [ "true", "false" ]
     default: "true"
     displayName: 'Whether the script should attempt to make a state file based on stack name'
+
+  - name: TerraformInitCreateBackendStateFilePrefix
+    type: string
+    default: ""
+    displayName: 'Backend prefix'
+
+  - name: TerraformInitCreateBackendStateFileSuffix
+    type: string
+    default: ""
+    displayName: 'Backend suffix'
 
   - name: TerraformInitExtraArgsJson
     type: string
