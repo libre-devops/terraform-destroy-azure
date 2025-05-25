@@ -113,7 +113,8 @@ USER root
 RUN rm -rf /tmp/* /var/tmp/* ~/.cache /home/${NORMAL_USER}/.cache
 
 COPY entrypoint.ps1 /home/${NORMAL_USER}/entrypoint.ps1
-RUN chmod +x /home/${NORMAL_USER}/entrypoint.ps1
+RUN dos2unix /home/${NORMAL_USER}/entrypoint.ps1 \
+    && chmod +x /home/${NORMAL_USER}/entrypoint.ps1
 
 USER ${NORMAL_USER}
 

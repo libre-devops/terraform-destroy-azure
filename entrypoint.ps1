@@ -1,3 +1,6 @@
+#!/usr/bin/env pwsh
+
+
 param()
 
 # Helper function: Get input or default (GitHub Actions passes env vars as INPUT_<UPPER_SNAKE>)
