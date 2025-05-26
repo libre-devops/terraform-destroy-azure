@@ -50,11 +50,11 @@ try
     Write-Host "→ Installing LibreDevOpsHelpers from PSGallery..."
     Install-Module LibreDevOpsHelpers -Scope CurrentUser -Force -AllowClobber -ErrorAction Stop
     Write-Host "→ Importing LibreDevOpsHelpers..."
-    Import-Module LibreDevOpsHelpers -Force -Verbose
+    Import-Module LibreDevOpsHelpers -Force
 }
 catch
 {
-    Write-Host "Error installing LibreDevOpsHelpers from PSGallery: $($_.Exception.Message)"
+    Write-Host "Error installing LibreDevOpsHelpers from PSGallery: $( $_.Exception.Message )"
     exit 1
 }
 
