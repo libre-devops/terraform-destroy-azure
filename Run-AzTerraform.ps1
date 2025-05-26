@@ -5,7 +5,7 @@ param (
     [string]$RunTerraformPlanDestroy = "true",
     [string]$RunTerraformApply = "false",
     [string]$RunTerraformDestroy = "false",
-    [string]$TerraformInitExtraArgsJson = '[]',
+    [string]$TerraformInitExtraArgsJson = '["-reconfigure", "-upgrade"]',
     [string]$TerraformInitCreateBackendStateFileName = "true",
     [string]$TerraformInitCreateBackendStateFilePrefix = "",
     [string]$TerraformInitCreateBackendStateFileSuffix = "",
@@ -24,8 +24,8 @@ param (
     [string]$CheckovExtraArgsJson = '[]',
     [string]$TerraformPlanFileName = "tfplan.plan",
     [string]$TerraformDestroyPlanFileName = "tfplan-destroy.plan",
-    [string]$TerraformCodeLocation = "terraform",
-    [string]$TerraformStackToRunJson = '["all"]', # JSON format Use 'all' to run 0_, 1_, etc and destroy in reverse order 1_, 0_ etc
+    [string]$TerraformCodeLocation = "examples",
+    [string]$TerraformStackToRunJson = '["module-development"]', # JSON format Use 'all' to run 0_, 1_, etc and destroy in reverse order 1_, 0_ etc
     [string]$CreateTerraformWorkspace = "true",
     [string]$TerraformWorkspace = "dev",
     [string]$InstallAzureCli = "falFnse",
@@ -248,7 +248,6 @@ try
                     -StacksToRun $TerraformStackToRun
 
         # ──────────────────── REVERSE execution order for destroys ────────────────
-        # ──────────────────── REVERSE execution order for destroys ────────────────
         if ($convertedRunTerraformPlanDestroy -or $convertedRunTerraformDestroy) {
             _LogMessage -Level 'DEBUG' -Message "Begin reverse‐order logic for destroy" -InvocationName $MyInvocation.MyCommand.Name
             _LogMessage -Level 'DEBUG' -Message "Original stackFolders: $($stackFolders -join ', ')" -InvocationName $MyInvocation.MyCommand.Name
@@ -336,10 +335,10 @@ try
                     $TfPlanFileName = $TerraformDestroyPlanFileName
                 }
 
-                Convert-TerraformPlanToJson -CodePath $folder -PlanFile $TfPlanFileName
-
                 if ($convertedRunCheckov -and $convertedRunTerraformPlan)
                 {
+                    Convert-TerraformPlanToJson -CodePath $folder -PlanFile $TfPlanFileName
+
                     Invoke-Checkov `
                         -CodePath           $folder `
                         -CheckovSkipChecks  $CheckovSkipCheck `
