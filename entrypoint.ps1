@@ -27,6 +27,30 @@ function Get-ActionInput
     return $default
 }
 
+
+if (-not $Env:ARM_OIDC_TOKEN) {
+    Write-Warning "ARM_OIDC_TOKEN is not set. OIDC-based authentication may fail."
+} else {
+    Write-Host "ARM_OIDC_TOKEN was passed into the container and is available for authentication."
+    # Use $OIDC_TOKEN for your az login or other service authentication here
+}
+
+if ($env:ARM_OIDC_TOKEN -and $env:ARM_CLIENT_ID -and $env:ARM_TENANT_ID) {
+    az login `
+        --service-principal `
+        --username $env:ARM_CLIENT_ID `
+        --tenant $env:ARM_TENANT_ID `
+        --federated-token $env:ARM_OIDC_TOKEN
+    if ($LASTEXITCODE -ne 0) {
+        throw "az login failed using OIDC federated token."
+    } else {
+        Write-Host "az login successful using federated token."
+    }
+} else {
+    throw "Missing one of the required environment variables: ARM_OIDC_TOKEN, ARM_CLIENT_ID, ARM_TENANT_ID"
+}
+
+
 Write-Host "===== DEBUG: Dumping all INPUT_* env vars ====="
 Get-ChildItem env: | Where-Object { $_.Name -like 'INPUT_*' } | Sort-Object Name | ForEach-Object { Write-Host "$( $_.Name ) = $( $_.Value )" }
 Write-Host "===== END DEBUG ====="
