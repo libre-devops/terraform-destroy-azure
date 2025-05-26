@@ -45,7 +45,7 @@ $fullTerraformCodePath = Join-Path -Path $currentWorkingDirectory -ChildPath $Te
 $scriptDir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 
 # Import all required modules
-Install-Module
+Install-Module -Name LibreDevOpsHelpers
 
 # Log that modules were loaded
 _LogMessage -Level "INFO" -Message "[$( $MyInvocation.MyCommand.Name )] Modules loaded successfully" -InvocationName "$( $MyInvocation.MyCommand.Name )"
