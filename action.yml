@@ -200,45 +200,75 @@ inputs:
     required: false
     default: 'true'
 
+  arm-tenant-id:
+    description: 'Azure Tenant ID for the service connection / login'
+    required: false
+    default: ''
+
+  arm-subscription-id:
+    description: 'Azure Subscription ID for the service connection / login'
+    required: false
+    default: ''
+
+  arm-client-id:
+    description: 'Azure Client ID for the service connection / login'
+    required: false
+    default: ''
+
+  arm-client-secret:
+    description: 'Azure Client Secret (only needed when client-secret flow is used)'
+    required: false
+    default: ''
+
+  azure-credentials:
+    description: 'Full JSON credentials block for azure/login when using client-secret auth'
+    required: false
+    default: ''
+
+
+
 runs:
   using: composite
   steps:
+
     - name: Checkout repository
       uses: actions/checkout@v3
 
+    # ---------- OIDC --------------------------------------------------------
     - name: Azure Login (OIDC)
       if: ${{ inputs.use-azure-oidc-login == 'true' && inputs.use-azure-service-connection == 'true' }}
       uses: azure/login@v2
       with:
-        tenant-id: ${{ secrets.ARM_TENANT_ID }}
-        subscription-id: ${{ inputs.target-subscription-id != '' && inputs.target-subscription-id || secrets.ARM_SUBSCRIPTION_ID }}
-        client-id: ${{ secrets.ARM_CLIENT_ID }}
-        enable-oidc: true
+        tenant-id:       ${{ inputs.arm-tenant-id }}
+        subscription-id: ${{ inputs.target-subscription-id != '' && inputs.target-subscription-id || inputs.arm-subscription-id }}
+        client-id:       ${{ inputs.arm-client-id }}
+        enable-oidc:     true
 
+    # ---------- Client Secret ----------------------------------------------
     - name: Azure Login (Client Secret)
-      if: ${{ inputs.use-azure-client-secret-login == 'true' inputs.use-azure-service-connection == 'true' }}
+      if: ${{ inputs.use-azure-client-secret-login == 'true' && inputs.use-azure-service-connection == 'true' }}
       uses: azure/login@v2
       with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        creds: ${{ inputs.azure-credentials }}
 
+    # ---------- Managed Identity -------------------------------------------
     - name: Azure Login (Managed Identity)
-      if: ${{ inputs.use-azure-managed-identity-login == 'true' inputs.use-azure-service-connection == 'true' }}
+      if: ${{ inputs.use-azure-managed-identity-login == 'true' && inputs.use-azure-service-connection == 'true' }}
       uses: azure/login@v2
       with:
         enable-managed-identity: true
-        subscription-id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+        subscription-id:        ${{ inputs.arm-subscription-id }}
 
+    # ---------- Main script -------------------------------------------------
     - name: Run-AzTerraform.ps1
       shell: pwsh
       working-directory: ${{ inputs.terraform-code-location }}
       env:
-        ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-        ARM_SUBSCRIPTION_ID: ${{ inputs.target-subscription-id != '' && inputs.target-subscription-id || secrets.ARM_SUBSCRIPTION_ID }}
-        ARM_USE_AZUREAD: ${{ inputs.backend-use-azure-ad-auth }}
-        ARM_USE_OIDC: ${{ inputs.use-azure-oidc-login }}
-        ARM_USE_MSI: ${{ inputs.use-azure-managed-identity-login }}
-        ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+        ARM_SUBSCRIPTION_ID:  ${{ inputs.target-subscription-id != '' && inputs.target-subscription-id || inputs.arm-subscription-id }}
+        ARM_USE_AZUREAD:      ${{ inputs.backend-use-azure-ad-auth }}
+        ARM_USE_OIDC:         ${{ inputs.use-azure-oidc-login }}
+        ARM_USE_MSI:          ${{ inputs.use-azure-managed-identity-login }}
+        ARM_CLIENT_SECRET:    ${{ inputs.arm-client-secret }}
       run: |
         if ("${{ inputs.terraform_code_location }}" -eq "github_workspace") 
         {
