@@ -103,5 +103,3 @@ RUN tenv tf install latest --verbose && \
     tenv tf use latest --verbose
 
 USER ${NORMAL_USER}
-
-SHELL ["pwsh", "-Command"]
