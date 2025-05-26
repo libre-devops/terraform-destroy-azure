@@ -1,5 +1,5 @@
 name: 'Libre DevOps – Terraform for Azure (composite)'
-description: 'Run the Run-AzTerraform.ps1 script with all the same parameters as your Azure DevOps task, but as a GitHub composite action.'
+description: 'Run the Run-AzTerraform.ps1 script with terraform plan parameters'
 author: 'Craig Thacker (craig@craigthacker.dev)'
 branding:
   icon: terminal
@@ -18,7 +18,7 @@ inputs:
   terraform-stack-to-run-json:
     description: 'JSON array of stacks to run (e.g. ["all"])'
     required: false
-    default: '["all"]'
+    default: '["module-development"]'
 
   terraform-workspace:
     description: 'Terraform workspace name'
@@ -163,12 +163,12 @@ inputs:
   run-checkov:
     description: 'Whether to run Checkov'
     required: false
-    default: 'true'
+    default: 'false'
 
   install-checkov:
     description: 'Whether to install Checkov'
     required: false
-    default: 'true'
+    default: 'false'
 
   checkov-skip-check:
     description: 'Comma-separated Checkov IDs to skip'
@@ -262,7 +262,6 @@ runs:
         auth-type: ManagedIdentity
         subscription-id:        ${{ inputs.arm-subscription-id }}
         allow-no-subscriptions: ${{ inputs.allow-no-subscriptions }}
-
 
     # ---------- Main script -------------------------------------------------
     - name: Run-AzTerraform.ps1

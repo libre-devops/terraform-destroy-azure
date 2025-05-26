@@ -17,7 +17,7 @@ on:
       docker_image_name:
         type: string
         description: 'Docker Image name?'
-        default: "terraform-azure-composite-gh-action/runner"
+        default: "terraform-plan-azure/runner"
       enable_debug_mode:
         type: boolean
         description: 'Whether debug mode should be enable for within the script'

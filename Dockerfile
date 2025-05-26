@@ -1,7 +1,7 @@
 FROM ubuntu:24.04
 
 LABEL org.opencontainers.image.title=runner
-LABEL org.opencontainers.image.source=https://github.com/libre-devops/terraform-azure-composite-gh-action
+LABEL org.opencontainers.image.source=https://github.com/libre-devops/terraform-plan-azure
 
 ARG NORMAL_USER=builder
 ARG DEBIAN_FRONTEND=noninteractive
@@ -86,7 +86,8 @@ RUN curl -sSLO https://packages.microsoft.com/config/ubuntu/22.04/packages-micro
 # Install PowerShell modules (Az, Microsoft.Graph, Pester)
 RUN pwsh -Command "Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted; \
     Install-Module -Name Microsoft.Graph -Force -AllowClobber -Scope AllUsers -Repository PSGallery; \
-    Install-Module -Name Pester -Force -AllowClobber -Scope AllUsers -Repository PSGallery"
+    Install-Module -Name Pester -Force -AllowClobber -Scope AllUsers -Repository PSGallery; \
+    Install-Module -Name LibreDevOpsHelpers -Force -AllowClobber -Scope AllUsers -Repository PSGallery; \
 
 # Copy your PowerShell scripts and modules in (do this before USER switch)
 COPY Run-AzTerraform.ps1 /home/${NORMAL_USER}/Run-AzTerraform.ps1
