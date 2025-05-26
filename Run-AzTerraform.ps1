@@ -44,19 +44,19 @@ $fullTerraformCodePath = Join-Path -Path $currentWorkingDirectory -ChildPath $Te
 # Get script directory
 $scriptDir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 
-# Import all required modules
-Write-Host "→ Uninstalling existing LibreDevOpsHelpers versions..."
-try {
-    Uninstall-Module LibreDevOpsHelpers -AllVersions -Force -ErrorAction Stop
-    Write-Host "   Uninstall-Module completed."
-} catch {
-    Write-Host "   (No existing PSGallery versions found.)"
-}
+try
+{
 
-Write-Host "→ Installing LibreDevOpsHelpers from PSGallery..."
-Install-Module LibreDevOpsHelpers -Scope CurrentUser -Force -AllowClobber -ErrorAction Stop
-Write-Host "→ Importing LibreDevOpsHelpers..."
-Import-Module LibreDevOpsHelpers -Force -Verbose
+    Write-Host "→ Installing LibreDevOpsHelpers from PSGallery..."
+    Install-Module LibreDevOpsHelpers -Scope CurrentUser -Force -AllowClobber -ErrorAction Stop
+    Write-Host "→ Importing LibreDevOpsHelpers..."
+    Import-Module LibreDevOpsHelpers -Force -Verbose
+}
+catch
+{
+    Write-Host "Error installing LibreDevOpsHelpers from PSGallery: $($_.Exception.Message)"
+    exit 1
+}
 
 # Log that modules were loaded
 _LogMessage -Level "INFO" -Message "[$( $MyInvocation.MyCommand.Name )] Modules loaded successfully" -InvocationName "$( $MyInvocation.MyCommand.Name )"
