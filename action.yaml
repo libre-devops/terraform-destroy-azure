@@ -1,5 +1,5 @@
-name: 'Libre DevOps – Terraform Plan -destroy for Azure'
-description: 'Run the Run-AzTerraform.ps1 script with terraform plan -destroy parameters'
+name: 'Libre DevOps – Terraform Destroy for Azure'
+description: 'Run the Run-AzTerraform.ps1 script with terraform destroy parameters'
 author: 'Craig Thacker (craig@craigthacker.dev)'
 branding:
   icon: terminal
@@ -53,7 +53,7 @@ inputs:
   run-terraform-destroy:
     description: 'Whether to run terraform destroy'
     required: false
-    default: 'false'
+    default: 'true'
 
   terraform-init-create-backend-state-file-name:
     description: 'Create backend state file per stack'

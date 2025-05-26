@@ -4,7 +4,7 @@ param (
     [string]$RunTerraformPlan = "false",
     [string]$RunTerraformPlanDestroy = "true",
     [string]$RunTerraformApply = "false",
-    [string]$RunTerraformDestroy = "false",
+    [string]$RunTerraformDestroy = "true",
     [string]$TerraformInitExtraArgsJson = '["-reconfigure", "-upgrade"]',
     [string]$TerraformInitCreateBackendStateFileName = "true",
     [string]$TerraformInitCreateBackendStateFilePrefix = "",

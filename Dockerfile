@@ -1,7 +1,7 @@
 FROM ubuntu:24.04
 
 LABEL org.opencontainers.image.title=runner
-LABEL org.opencontainers.image.source=https://github.com/libre-devops/terraform-plan-destroy-azure
+LABEL org.opencontainers.image.source=https://github.com/libre-devops/terraform-destroy-azure
 
 ARG NORMAL_USER=builder
 ARG DEBIAN_FRONTEND=noninteractive
