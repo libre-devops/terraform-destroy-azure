@@ -1,193 +1,284 @@
-name: 'Libre DevOps - Run Terraform for Azure - Docker GitHub Action'
-description: 'The heavily opinionated Libre DevOps Action to run Terraform and related tasks, targeting Azure environments.'
-author: "Craig Thacker <craig@craigthacker.dev>"
+name: 'Libre DevOps – Terraform for Azure (composite)'
+description: 'Run the Run-AzTerraform.ps1 script with all the same parameters as your Azure DevOps task, but as a GitHub composite action.'
+author: 'Craig Thacker (craig@craigthacker.dev)'
 branding:
-  icon: 'terminal'
-  color: 'green'
+  icon: terminal
+  color: green
+
+permissions:
+  id-token: write
+  contents: read
 
 inputs:
   terraform-code-location:
-    description: 'The root folder path where your Terraform code is located.'
+    description: 'Path to Terraform code'
     required: false
     default: 'terraform'
 
   terraform-stack-to-run-json:
-    description: 'A JSON array of stack names/folders to run (e.g., ["all"], ["rg"], ["network"]).'
+    description: 'JSON array of stacks to run (e.g. ["all"])'
     required: false
     default: '["all"]'
 
   terraform-workspace:
-    description: 'The Terraform workspace to use or create (if empty, defaults to default workspace).'
+    description: 'Terraform workspace name'
     required: false
     default: ''
 
   run-terraform-init:
-    description: 'Whether to run "terraform init" before plan/apply.'
+    description: 'Whether to run terraform init'
     required: false
     default: 'true'
 
   run-terraform-validate:
-    description: 'Whether to run "terraform validate" after init.'
+    description: 'Whether to run terraform validate'
     required: false
     default: 'true'
 
   run-terraform-plan:
-    description: 'Whether to run "terraform plan".'
+    description: 'Whether to run terraform plan'
     required: false
     default: 'true'
 
   run-terraform-plan-destroy:
-    description: 'Whether to run "terraform plan -destroy".'
+    description: 'Whether to run terraform plan -destroy'
     required: false
     default: 'false'
 
   run-terraform-apply:
-    description: 'Whether to run "terraform apply" after a successful plan.'
+    description: 'Whether to run terraform apply'
     required: false
     default: 'false'
 
   run-terraform-destroy:
-    description: 'Whether to run "terraform destroy".'
+    description: 'Whether to run terraform destroy'
     required: false
     default: 'false'
 
   terraform-init-create-backend-state-file-name:
-    description: 'If true, auto-generates a backend state file name per stack.'
+    description: 'Create backend state file per stack'
     required: false
     default: 'true'
 
   terraform-init-create-backend-state-file-prefix:
-    description: 'Prefix to prepend to the generated backend state file name.'
+    description: 'Backend prefix'
     required: false
     default: ''
 
   terraform-init-create-backend-state-file-suffix:
-    description: 'Suffix to append to the generated backend state file name.'
+    description: 'Backend suffix'
     required: false
     default: ''
 
   terraform-init-extra-args-json:
-    description: 'A JSON array of extra arguments for "terraform init".'
+    description: 'Extra args for init (JSON array)'
     required: false
-    default: '[ ]'
+    default: '[]'
 
   terraform-plan-extra-args-json:
-    description: 'A JSON array of extra arguments for "terraform plan".'
+    description: 'Extra args for plan (JSON array)'
     required: false
-    default: '[ ]'
+    default: '[]'
 
   terraform-plan-destroy-extra-args-json:
-    description: 'A JSON array of extra arguments for "terraform plan -destroy".'
+    description: 'Extra args for plan destroy (JSON array)'
     required: false
-    default: '[ ]'
+    default: '[]'
 
   terraform-apply-extra-args-json:
-    description: 'A JSON array of extra arguments for "terraform apply".'
+    description: 'Extra args for apply (JSON array)'
     required: false
-    default: '[ ]'
+    default: '[]'
 
   terraform-destroy-extra-args-json:
-    description: 'A JSON array of extra arguments for "terraform destroy".'
+    description: 'Extra args for destroy (JSON array)'
     required: false
-    default: '[ ]'
+    default: '[]'
 
   debug-mode:
-    description: 'Enable verbose debug logging (set to "true" for troubleshooting).'
+    description: 'Enable debug logging'
     required: false
     default: 'false'
 
   delete-plan-files:
-    description: 'Delete the plan files after execution (recommended for CI/CD).'
+    description: 'Delete plan files after run'
     required: false
     default: 'true'
 
   terraform-version:
-    description: 'The Terraform version to use (e.g., "latest", "1.6.5").'
+    description: 'Terraform version (e.g. "1.6.5")'
     required: false
     default: 'latest'
 
-  run-checkov:
-    description: 'Whether to run Checkov security scan on the plan.'
-    required: false
-    default: 'true'
-
-  checkov-skip-check:
-    description: 'Comma-separated list of Checkov check IDs to skip.'
-    required: false
-    default: ''
-
-  checkov-softfail:
-    description: 'Continue pipeline even if Checkov finds issues (set to "true" to soft-fail).'
-    required: false
-    default: 'false'
-
-  checkov-extra-args-json:
-    description: 'A JSON array of extra arguments for Checkov.'
-    required: false
-    default: '[ ]'
-
-  terraform-plan-file-name:
-    description: 'The filename for the Terraform plan output (default: tfplan.plan).'
-    required: false
-    default: 'tfplan.plan'
-
-  terraform-destroy-plan-file-name:
-    description: 'The filename for the Terraform destroy plan output (default: tfplan-destroy.plan).'
-    required: false
-    default: 'tfplan-destroy.plan'
-
-  create-terraform-workspace:
-    description: 'If true, create or select the Terraform workspace.'
-    required: false
-    default: 'true'
-
-  use-azure-client-secret-login:
-    description: 'Enable Azure Client Secret login (SPN auth).'
-    required: false
-    default: 'false'
-
-  use-azure-oidc-login:
-    description: 'Enable Azure OIDC login (recommended for GitHub Actions).'
-    required: false
-    default: 'true'
-
-  use-azure-user-login:
-    description: 'Enable interactive user/device code login for Azure.'
-    required: false
-    default: 'false'
-
-  use-azure-managed-identity-login:
-    description: 'Enable Azure Managed Identity login.'
-    required: false
-    default: 'false'
-
-  use-azure-service-connection:
-    description: 'Enable Azure DevOps service connection (for compatibility, rarely needed in GitHub Actions).'
-    required: false
-    default: 'true'
-
   install-tenv-terraform:
-    description: 'Install and manage Terraform with tenv.'
+    description: 'Whether to install Tenv and Terraform via Tenv'
     required: false
     default: 'false'
 
   install-azure-cli:
-    description: 'Install Azure CLI in the container.'
+    description: 'Whether to install Azure CLI'
     required: false
     default: 'false'
+
+  use-azure-service-connection:
+    description: 'Whether to use a DevOps-style service connection'
+    required: false
+    default: 'true'
 
   attempt-azure-login:
-    description: 'Attempt Azure login in the script (set to true to try, usually not needed for OIDC).'
+    description: 'Whether to attempt Azure login in script'
     required: false
     default: 'false'
+
+  use-azure-client-secret-login:
+    description: 'Authenticate via client secret'
+    required: false
+    default: 'false'
+
+  use-azure-oidc-login:
+    description: 'Authenticate via OIDC'
+    required: false
+    default: 'true'
+
+  use-azure-user-login:
+    description: 'Authenticate via device-code (user)'
+    required: false
+    default: 'false'
+
+  use-azure-managed-identity-login:
+    description: 'Authenticate via managed identity'
+    required: false
+    default: 'false'
+
+  backend-use-azure-ad-auth:
+    description: 'Backend auth via Azure AD'
+    required: false
+    default: 'true'
+
+  target-subscription-id:
+    description: 'Override subscription ID'
+    required: false
+    default: ''
+
+  run-checkov:
+    description: 'Whether to run Checkov'
+    required: false
+    default: 'true'
 
   install-checkov:
-    description: 'Install Checkov in the container.'
+    description: 'Whether to install Checkov'
     required: false
     default: 'false'
 
+  checkov-skip-check:
+    description: 'Comma-separated Checkov IDs to skip'
+    required: false
+    default: ''
+
+  checkov-softfail:
+    description: 'Soft-fail Checkov scan'
+    required: false
+    default: 'false'
+
+  checkov-extra-args-json:
+    description: 'Extra args for Checkov (JSON array)'
+    required: false
+    default: '[]'
+
+  terraform-plan-file-name:
+    description: 'Plan file name'
+    required: false
+    default: 'tfplan.plan'
+
+  terraform-destroy-plan-file-name:
+    description: 'Destroy plan file name'
+    required: false
+    default: 'tfplan-destroy.plan'
+
+  create-terraform-workspace:
+    description: 'Create/select Terraform workspace'
+    required: false
+    default: 'true'
 
 runs:
-  using: 'docker'
-  image: 'docker://ghcr.io/libre-devops/terraform-azure-docker-gh-action/runner:latest'
-  entrypoint: 'entrypoint.ps1'
+  using: composite
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Azure Login (OIDC)
+      if: ${{ inputs.use-azure-oidc-login == 'true' && inputs.use-azure-service-connection == 'true' }}
+      uses: azure/login@v2
+      with:
+        tenant-id: ${{ secrets.ARM_TENANT_ID }}
+        subscription-id: ${{ inputs.target-subscription-id != '' && inputs.target-subscription-id || secrets.ARM_SUBSCRIPTION_ID }}
+        client-id: ${{ secrets.ARM_CLIENT_ID }}
+        enable-oidc: true
+
+    - name: Azure Login (Client Secret)
+      if: ${{ inputs.use-azure-client-secret-login == 'true' inputs.use-azure-service-connection == 'true' }}
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Azure Login (Managed Identity)
+      if: ${{ inputs.use-azure-managed-identity-login == 'true' inputs.use-azure-service-connection == 'true' }}
+      uses: azure/login@v2
+      with:
+        enable-managed-identity: true
+        subscription-id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+
+    - name: Run-AzTerraform.ps1
+      shell: pwsh
+      working-directory: ${{ inputs.terraform-code-location }}
+      env:
+        ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+        ARM_SUBSCRIPTION_ID: ${{ inputs.target-subscription-id != '' && inputs.target-subscription-id || secrets.ARM_SUBSCRIPTION_ID }}
+        ARM_USE_AZUREAD: ${{ inputs.backend-use-azure-ad-auth }}
+        ARM_USE_OIDC: ${{ inputs.use-azure-oidc-login }}
+        ARM_USE_MSI: ${{ inputs.use-azure-managed-identity-login }}
+        ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+      run: |
+        if ("${{ inputs.terraform_code_location }}" -eq "github_workspace") 
+        {
+          $workingDirectory = "${{ github.workspace }}"
+        }
+        else
+        {
+          $workingDirectory = "${{ inputs.terraform_code_location }}"
+        }
+        
+        pwsh -NoLogo -NoProfile -File "${{ github.action_path }}/Run-AzTerraform.ps1" `
+          -TerraformCodeLocation                      '${{ inputs.terraform-code-location }}' `
+          -TerraformStackToRunJson                    '${{ inputs.terraform-stack-to-run-json }}' `
+          -TerraformWorkspace                         '${{ inputs.terraform-workspace }}' `
+          -RunTerraformInit                           '${{ inputs.run-terraform-init }}' `
+          -RunTerraformValidate                       '${{ inputs.run-terraform-validate }}' `
+          -RunTerraformPlan                           '${{ inputs.run-terraform-plan }}' `
+          -RunTerraformPlanDestroy                    '${{ inputs.run-terraform-plan-destroy }}' `
+          -RunTerraformApply                          '${{ inputs.run-terraform-apply }}' `
+          -RunTerraformDestroy                        '${{ inputs.run-terraform-destroy }}' `
+          -TerraformInitCreateBackendStateFileName    '${{ inputs.terraform-init-create-backend-state-file-name }}' `
+          -TerraformInitCreateBackendStateFilePrefix  '${{ inputs.terraform-init-create-backend-state-file-prefix }}' `
+          -TerraformInitCreateBackendStateFileSuffix  '${{ inputs.terraform-init-create-backend-state-file-suffix }}' `
+          -TerraformInitExtraArgsJson                 '${{ inputs.terraform-init-extra-args-json }}' `
+          -TerraformPlanExtraArgsJson                 '${{ inputs.terraform-plan-extra-args-json }}' `
+          -TerraformPlanDestroyExtraArgsJson          '${{ inputs.terraform-plan-destroy-extra-args-json }}' `
+          -TerraformApplyExtraArgsJson                '${{ inputs.terraform-apply-extra-args-json }}' `
+          -TerraformDestroyExtraArgsJson              '${{ inputs.terraform-destroy-extra-args-json }}' `
+          -InstallTenvTerraform                       '${{ inputs.install-tenv-terraform }}' `
+          -InstallAzureCli                            '${{ inputs.install-azure-cli }}' `
+          -AttemptAzureLogin                          '${{ inputs.attempt-azure-login }}' `
+          -UseAzureServiceConnection                  '${{ inputs.use-azure-service-connection }}' `
+          -TerraformVersion                           '${{ inputs.terraform-version }}' `
+          -DebugMode                                  '${{ inputs.debug-mode }}' `
+          -DeletePlanFiles                            '${{ inputs.delete-plan-files }}' `
+          -CreateTerraformWorkspace                   '${{ inputs.create-terraform-workspace }}' `
+          -RunCheckov                                 '${{ inputs.run-checkov }}' `
+          -InstallCheckov                             '${{ inputs.install-checkov }}' `
+          -CheckovSkipCheck                           '${{ inputs.checkov-skip-check }}' `
+          -CheckovSoftfail                            '${{ inputs.checkov-softfail }}' `
+          -CheckovExtraArgsJson                       '${{ inputs.checkov-extra-args-json }}' `
+          -TerraformPlanFileName                      '${{ inputs.terraform-plan-file-name }}' `
+          -TerraformDestroyPlanFileName               '${{ inputs.terraform-destroy-plan-file-name }}'
