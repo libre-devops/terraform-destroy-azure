@@ -28,7 +28,7 @@ param (
     [string]$TerraformStackToRunJson = '["all"]', # JSON format Use 'all' to run 0_, 1_, etc and destroy in reverse order 1_, 0_ etc
     [string]$CreateTerraformWorkspace = "true",
     [string]$TerraformWorkspace = "dev",
-    [string]$InstallAzureCli = "false",
+    [string]$InstallAzureCli = "falFnse",
     [string]$UseAzureServiceConnection = "true",
     [string]$AttemptAzureLogin = "false",
     [string]$UseAzureClientSecretLogin = "false",
@@ -251,18 +251,28 @@ try
         if ($convertedRunTerraformPlanDestroy -or $convertedRunTerraformDestroy)
         {
 
-            # 1. sort numerically by the leading digits in the folder name
-            $stackFolders = $stackFolders |
-                    Sort-Object {
-                        # “C:\...\1_network”  →  1
-                        [int](
-                        (($_ -split '[\\/]')[-1]) -replace '^(\d+)_.*', '$1'
-                        )
-                    }
+            # select numeric-prefix folders
+            $numeric = $stackFolders | Where-Object {
+                ($_ -split '[\\/]')[-1] -match '^\d+_'
+            }
 
-            # 2. reverse   (static .NET call – do **not** pipe this!)
-            [array]::Reverse($stackFolders)
+            # sort & reverse them
+            $ordered = $numeric | Sort-Object {
+                [int](
+                (($_ -split '[\\/]')[-1]) -replace '^(\d+)_.*', '$1'
+                )
+            }
+            [array]::Reverse($ordered)
+
+            # capture any non-numeric ones
+            $others = $stackFolders | Where-Object {
+                ($_ -split '[\\/]')[-1] -notmatch '^\d+_'
+            }
+
+            # recombine
+            $stackFolders = $ordered + $others
         }
+
 
         foreach ($folder in $stackFolders)
         {
