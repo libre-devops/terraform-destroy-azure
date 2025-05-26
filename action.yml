@@ -189,5 +189,5 @@ inputs:
 
 runs:
   using: 'docker'
-  image: 'docker://ghcr.io/libre-devops/terraform-azure-docker-gh-action/base:latest'
+  image: 'docker://ghcr.io/libre-devops/terraform-azure-docker-gh-action/runner:latest'
   entrypoint: 'entrypoint.ps1'
