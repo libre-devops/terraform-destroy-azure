@@ -47,10 +47,12 @@ $scriptDir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 # Import all required modules
 try
 {
-    Write-Host "Attempting to import powershell modules"
+    Write-Host "Attempting to install powershell modules"
     Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
     Install-Module -Name LibreDevOpsHelpers -Force -AllowClobber
-    Write-Host "Successfully imported powershell modules"
+    Write-Host "Attempting to import powershell modules"
+    Import-Module LibreDevOpsHelpers -Force -Verbose
+    Write-Host "Import successful"
 }
 catch
 {
