@@ -38,12 +38,12 @@ inputs:
   run-terraform-plan:
     description: 'Whether to run terraform plan'
     required: false
-    default: 'true'
+    default: 'false'
 
   run-terraform-plan-destroy:
     description: 'Whether to run terraform plan -destroy'
     required: false
-    default: 'false'
+    default: 'true'
 
   run-terraform-apply:
     description: 'Whether to run terraform apply'
