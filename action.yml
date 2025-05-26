@@ -279,15 +279,6 @@ runs:
         ARM_USE_MSI:          ${{ inputs.use-azure-managed-identity-login }}
         ARM_CLIENT_SECRET:    ${{ inputs.arm-client-secret }}
       run: |
-        if ("${{ inputs.terraform_code_location }}" -eq "github_workspace") 
-        {
-          $workingDirectory = "${{ github.workspace }}"
-        }
-        else
-        {
-          $workingDirectory = "${{ inputs.terraform_code_location }}"
-        }
-        
         pwsh -NoLogo -NoProfile -File "${{ github.action_path }}/Run-AzTerraform.ps1" `
           -TerraformCodeLocation                      '${{ inputs.terraform-code-location }}' `
           -TerraformStackToRunJson                    '${{ inputs.terraform-stack-to-run-json }}' `
