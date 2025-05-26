@@ -61,27 +61,15 @@ Here's an example of how to use the action in a GitHub workflow:
 ```yaml
 # .github/workflows/terraform-azure.yml
 
-name: Terraform Build
+name: Terraform Plan
 
 on:
   workflow_dispatch:
     inputs:
-      terraform-code-location:
-        description: 'Terraform code location'
-        required: false
-        default: 'terraform'
       terraform-workspace:
         description: 'Terraform workspace'
         required: false
         default: 'dev'
-      terraform-stack-to-run-json:
-        description: 'Terraform stacks to run'
-        required: false
-        default: '["rg"]'
-      debug-mode:
-        description: 'Debug mode'
-        required: false
-        default: 'false'
 env:
   terraform-init-extra-args-json: '["-backend-config=subscription_id=${{ secrets.ARM_BACKEND_SUBSCRIPTION_ID }}", "-backend-config=resource_group_name=${{ secrets.ARM_BACKEND_STORAGE_RG_NAME }}", "-backend-config=storage_account_name=${{ secrets.ARM_BACKEND_STORAGE_ACCOUNT }}", "-backend-config=container_name=${{ secrets.ARM_BACKEND_CONTAINER_NAME }}"]'
 
@@ -89,6 +77,7 @@ env:
 permissions:
   id-token: write # This is required for requesting the JWT
   contents: read  # This is required for actions/checkout
+  packages: read
 
 jobs:
   terraform:
@@ -97,21 +86,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Libre DevOps - Run Terraform for Azure
-        uses: libre-devops/terraform-azure-composite-gh-action@v0.1
+      - name: Libre DevOps - Run Terraform Plan for Azure
+        uses: libre-devops/terraform-plan@v1
         with:
-          terraform-code-location: ${{ github.event.inputs.terraform-code-location }}
-          terraform-stack-to-run-json: ${{ github.event.inputs.terraform-stack-to-run-json }}
           terraform-workspace: ${{ github.event.inputs.terraform-workspace }}
-          debug-mode: ${{ github.event.inputs.debug-mode }}
           terraform-init-extra-args-json: ${{ env.terraform-init-extra-args-json }}
+          arm-tenant-id: ${{ secrets.ARM_TENANT_ID }}
+          arm-subscription-id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          arm-client-id: ${{ secrets.ARM_CLIENT_ID }}
         env:
-          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-          ARM_OIDC_TOKEN: ${{ env.OIDC_TOKEN }}
           TENV_AUTO_INSTALL: true
-          ARM_USE_AZUREAD: true
 ```
 
 ## 🔐 Azure Authentication

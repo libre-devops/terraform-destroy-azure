@@ -13,7 +13,7 @@ inputs:
   terraform-code-location:
     description: 'Path to Terraform code'
     required: false
-    default: 'terraform'
+    default: 'examples'
 
   terraform-stack-to-run-json:
     description: 'JSON array of stacks to run (e.g. ["all"])'
