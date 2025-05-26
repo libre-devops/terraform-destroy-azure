@@ -115,9 +115,79 @@ The action supports various Azure authentication methods:
 
 Set the corresponding input parameters (`use-azure-oidc-login`, `use-azure-client-secret-login`, etc.) to enable the desired authentication method.
 
-## 🧪 Testing
+## 🧪 Usage
 
-To test the action locally or in a development environment, you can use the provided `Run-Docker.ps1` script, which builds and runs the Docker container with appropriate parameters.
+```yaml
+# .github/workflows/terraform-azure.yml
+
+name: Terraform Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      terraform-code-location:
+        description: 'Terraform code location'
+        required: false
+        default: 'terraform'
+      terraform-workspace:
+        description: 'Terraform workspace'
+        required: false
+        default: 'dev'
+      terraform-stack-to-run-json:
+        description: 'Terraform stacks to run'
+        required: false
+        default: '["rg"]'
+      debug-mode:
+        description: 'Debug mode'
+        required: false
+        default: 'false'
+env:
+  terraform-init-extra-args-json: '["-backend-config=subscription_id=${{ secrets.ARM_BACKEND_SUBSCRIPTION_ID }}", "-backend-config=resource_group_name=${{ secrets.ARM_BACKEND_STORAGE_RG_NAME }}", "-backend-config=storage_account_name=${{ secrets.ARM_BACKEND_STORAGE_ACCOUNT }}", "-backend-config=container_name=${{ secrets.ARM_BACKEND_CONTAINER_NAME }}"]'
+
+
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read  # This is required for actions/checkout
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.ARM_CLIENT_ID }}
+          tenant-id: ${{ secrets.ARM_TENANT_ID }}
+          subscription-id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+
+      - name: Get GitHub OIDC Token
+        id: get_oidc_token
+        run: |
+          OIDC_TOKEN=$(curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+                "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=api://AzureADTokenExchange" \
+                | jq -r '.value')
+              echo "OIDC_TOKEN=$OIDC_TOKEN" >> $GITHUB_ENV
+
+      - name: Libre DevOps - Run Terraform for Azure
+        uses: libre-devops/terraform-azure-docker-gh-action@v0.1
+        with:
+          terraform-code-location: ${{ github.event.inputs.terraform-code-location }}
+          terraform-stack-to-run-json: ${{ github.event.inputs.terraform-stack-to-run-json }}
+          terraform-workspace: ${{ github.event.inputs.terraform-workspace }}
+          debug-mode: ${{ github.event.inputs.debug-mode }}
+          terraform-init-extra-args-json: ${{ env.terraform-init-extra-args-json }}
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          ARM_OIDC_TOKEN: ${{ env.OIDC_TOKEN }}
+          TENV_AUTO_INSTALL: true
+          ARM_USE_AZUREAD: true
+```
+
 
 ## 📄 License
 
