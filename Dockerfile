@@ -91,7 +91,6 @@ RUN pwsh -Command "Set-PSRepository -Name 'PSGallery' -InstallationPolicy Truste
 # Copy your PowerShell scripts and modules in (do this before USER switch)
 COPY Run-AzTerraform.ps1 /home/${NORMAL_USER}/Run-AzTerraform.ps1
 COPY PowerShellModules/ /home/${NORMAL_USER}/PowerShellModules
-COPY entrypoint.ps1 /home/${NORMAL_USER}/entrypoint.ps1
 
 RUN dos2unix /home/${NORMAL_USER}/entrypoint.ps1 \
     && dos2unix /home/${NORMAL_USER}/Run-AzTerraform.ps1 \
