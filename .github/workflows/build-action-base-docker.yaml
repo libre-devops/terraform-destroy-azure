@@ -1,4 +1,4 @@
-name: 'Run Docker - Ubuntu'
+name: 'Run Docker - Base'
 
 # Allow run manually
 on:
