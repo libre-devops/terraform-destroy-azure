@@ -46,7 +46,7 @@ $scriptDir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 
 # Import all required modules
 Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
-Install-Module -Name LibreDevOpsHelpers
+Install-Module -Name LibreDevOpsHelpers -Force
 
 # Log that modules were loaded
 _LogMessage -Level "INFO" -Message "[$( $MyInvocation.MyCommand.Name )] Modules loaded successfully" -InvocationName "$( $MyInvocation.MyCommand.Name )"
