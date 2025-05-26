@@ -91,7 +91,6 @@ RUN pwsh -Command "Set-PSRepository -Name 'PSGallery' -InstallationPolicy Truste
 
 # Copy your PowerShell scripts and modules in (do this before USER switch)
 COPY Run-AzTerraform.ps1 /home/${NORMAL_USER}/Run-AzTerraform.ps1
-COPY PowerShellModules/ /home/${NORMAL_USER}/PowerShellModules
 
 RUN dos2unix /home/${NORMAL_USER}/Run-AzTerraform.ps1 \
     && chown -R ${NORMAL_USER}:${NORMAL_USER} /home/${NORMAL_USER} \
