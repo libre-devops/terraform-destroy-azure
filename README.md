@@ -1,7 +1,7 @@
 
-# Libre DevOps – Terraform Azure Docker GitHub Action
+# Libre DevOps – Terraform Azure Composite GitHub Action
 
-A heavily opinionated GitHub Action designed to streamline Terraform workflows targeting Azure environments. This action encapsulates a Docker container preloaded with essential tools like Terraform, Azure CLI, PowerShell, and various language version managers, facilitating consistent and secure infrastructure deployments.
+A heavily opinionated GitHub Action designed to streamline Terraform workflows targeting Azure environments. This action encapsulates a Composite preloaded with essential tools like Terraform, Azure CLI, PowerShell, and various language version managers, facilitating consistent and secure infrastructure deployments.
 
 ## 🚀 Features
 
@@ -10,10 +10,6 @@ A heavily opinionated GitHub Action designed to streamline Terraform workflows t
 - **Modular Execution:** Allows granular control over Terraform commands (`init`, `validate`, `plan`, `apply`, `destroy`) through input parameters.
 - **Security Scanning:** Optional integration with Checkov for infrastructure security analysis.
 - **Customizable Backend Configuration:** Supports dynamic backend state file naming with optional prefixes and suffixes.
-
-## 📦 Docker Image
-
-The action utilizes a Docker container built from the provided `Dockerfile`, ensuring a consistent environment across different runs.
 
 ## 🛠️ Inputs
 
@@ -63,61 +59,6 @@ The action accepts the following inputs:
 Here's an example of how to use the action in a GitHub workflow:
 
 ```yaml
-name: 'Terraform Plan'
-
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    types: [closed]
-  workflow_dispatch:
-
-jobs:
-  azure-terraform-job:
-    name: 'Terraform Build'
-    runs-on: ubuntu-latest
-    environment: tst
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Libre DevOps Terraform GitHub Action
-        id: terraform-build
-        uses: libre-devops/terraform-azure-docker-gh-action@v1
-        with:
-          terraform-code-location: "terraform"
-          terraform-stack-to-run-json: '["all"]'
-          terraform-workspace: "dev"
-          run-terraform-init: "true"
-          run-terraform-validate: "true"
-          run-terraform-plan: "true"
-          run-terraform-apply: "false"
-          run-terraform-destroy: "false"
-          terraform-version: "latest"
-          debug-mode: "false"
-          delete-plan-files: "true"
-          run-checkov: "true"
-          checkov-softfail: "false"
-          create-terraform-workspace: "true"
-          use-azure-oidc-login: "true"
-          attempt-azure-login: "true"
-```
-
-## 🔐 Azure Authentication
-
-The action supports various Azure authentication methods:
-
-- **OIDC Login:** Recommended for GitHub Actions.
-- **Client Secret Login:** Uses service principal credentials.
-- **Managed Identity Login:** For Azure-hosted runners with managed identities.
-- **User Login:** Interactive login using device code.
-
-Set the corresponding input parameters (`use-azure-oidc-login`, `use-azure-client-secret-login`, etc.) to enable the desired authentication method.
-
-## 🧪 Usage
-
-```yaml
 # .github/workflows/terraform-azure.yml
 
 name: Terraform Build
@@ -156,23 +97,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Azure Login (OIDC)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.ARM_CLIENT_ID }}
-          tenant-id: ${{ secrets.ARM_TENANT_ID }}
-          subscription-id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-
-      - name: Get GitHub OIDC Token
-        id: get_oidc_token
-        run: |
-          OIDC_TOKEN=$(curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-                "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=api://AzureADTokenExchange" \
-                | jq -r '.value')
-              echo "OIDC_TOKEN=$OIDC_TOKEN" >> $GITHUB_ENV
-
       - name: Libre DevOps - Run Terraform for Azure
-        uses: libre-devops/terraform-azure-docker-gh-action@v0.1
+        uses: libre-devops/terraform-azure-composite-gh-action@v0.1
         with:
           terraform-code-location: ${{ github.event.inputs.terraform-code-location }}
           terraform-stack-to-run-json: ${{ github.event.inputs.terraform-stack-to-run-json }}
@@ -187,6 +113,17 @@ jobs:
           TENV_AUTO_INSTALL: true
           ARM_USE_AZUREAD: true
 ```
+
+## 🔐 Azure Authentication
+
+The action supports various Azure authentication methods:
+
+- **OIDC Login:** Recommended for GitHub Actions.
+- **Client Secret Login:** Uses service principal credentials.
+- **Managed Identity Login:** For Azure-hosted runners with managed identities.
+- **User Login:** Interactive login using device code.
+
+Set the corresponding input parameters (`use-azure-oidc-login`, `use-azure-client-secret-login`, etc.) to enable the desired authentication method.
 
 
 ## 📄 License
