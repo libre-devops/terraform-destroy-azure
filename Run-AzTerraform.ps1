@@ -45,6 +45,7 @@ $fullTerraformCodePath = Join-Path -Path $currentWorkingDirectory -ChildPath $Te
 $scriptDir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 
 # Import all required modules
+Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
 Install-Module -Name LibreDevOpsHelpers
 
 # Log that modules were loaded
