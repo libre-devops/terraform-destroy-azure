@@ -1,5 +1,5 @@
-name: 'Libre DevOps – Terraform Plan for Azure'
-description: 'Run the Run-AzTerraform.ps1 script with terraform plan parameters'
+name: 'Libre DevOps – Terraform Plan -destroy for Azure'
+description: 'Run the Run-AzTerraform.ps1 script with terraform plan -destroy parameters'
 author: 'Craig Thacker (craig@craigthacker.dev)'
 branding:
   icon: terminal
@@ -229,8 +229,6 @@ inputs:
     description: 'Full JSON credentials block for azure/login when using client-secret auth'
     required: false
     default: ''
-
-
 
 runs:
   using: composite
