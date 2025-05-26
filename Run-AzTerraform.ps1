@@ -45,10 +45,18 @@ $fullTerraformCodePath = Join-Path -Path $currentWorkingDirectory -ChildPath $Te
 $scriptDir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 
 # Import all required modules
-Write-Host "Attempting to import powershell modules"
-Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
-Install-Module -Name LibreDevOpsHelpers -Force -AllowClobber
-
+try
+{
+    Write-Host "Attempting to import powershell modules"
+    Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
+    Install-Module -Name LibreDevOpsHelpers -Force -AllowClobber
+    Write-Host "Successfully imported powershell modules"
+}
+catch
+{
+    Write-Host "Failed to import powershell modules"
+    throw $_
+}
 # Log that modules were loaded
 _LogMessage -Level "INFO" -Message "[$( $MyInvocation.MyCommand.Name )] Modules loaded successfully" -InvocationName "$( $MyInvocation.MyCommand.Name )"
 
