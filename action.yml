@@ -242,7 +242,6 @@ runs:
         tenant-id:       ${{ inputs.arm-tenant-id }}
         subscription-id: ${{ inputs.target-subscription-id != '' && inputs.target-subscription-id || inputs.arm-subscription-id }}
         client-id:       ${{ inputs.arm-client-id }}
-        enable-oidc:     true
 
     # ---------- Client Secret ----------------------------------------------
     - name: Azure Login (Client Secret)
@@ -256,7 +255,7 @@ runs:
       if: ${{ inputs.use-azure-managed-identity-login == 'true' && inputs.use-azure-service-connection == 'true' }}
       uses: azure/login@v2
       with:
-        enable-managed-identity: true
+        auth-type: ManagedIdentity
         subscription-id:        ${{ inputs.arm-subscription-id }}
 
     # ---------- Main script -------------------------------------------------
