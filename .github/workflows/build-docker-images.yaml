@@ -1,0 +1,91 @@
+name: 'Run Docker - Ubuntu'
+
+# Allow run manually
+on:
+  schedule:
+    - cron: '0 0 1 * *'  # This will run at 00:00 on the 1st of every month
+  workflow_dispatch:
+    inputs:
+      working_directory:
+        type: string
+        description: What working directory should be passed to the script
+        default: "github_workspace"
+      build_context:
+        type: string
+        description: "The context of the build"
+        default: "github_workspace"
+      enable_debug_mode:
+        type: boolean
+        description: 'Whether debug mode should be enable for within the script'
+        default: true
+      registry_url:
+        type: string
+        description: 'The URL of the container registry'
+        default: ghcr.io
+      push_docker_image:
+        type: string
+        description: 'Push docker image?'
+        default: 'true'
+
+jobs:
+  run-docker-build:
+    name: 'Run Docker Build Script'
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build
+        id: run-docker-build-base
+        shell: pwsh
+        run: |
+          if ("${{ inputs.working_directory }}" -eq "github_workspace") 
+          {
+            $workingDirectory = "${{ github.workspace }}"
+          }
+          else
+          {
+            $workingDirectory = "${{ inputs.working_directory }}"
+          }
+          
+          .\Run-Docker.ps1 `
+            -WorkingDirectory $workingDirectory `
+            -BuildContext ${{ github.workspace }} `
+            -PushDockerImage ${{ inputs.push_docker_image }} `
+            -DebugMode ${{ inputs.enable_debug_mode }} `
+            -DockerImageName 'terraform-azure-docker-gh-action/base' `
+            -DockerFileName 'Base.Dockerfile' `
+            -RegistryUsername ${{ secrets.RegistryUsername }} `
+            -RegistryPassword ${{ secrets.RegistryPassword }} `
+            -ImageOrg ${{ github.repository_owner }}
+          
+
+      - name: Build
+        id: run-docker-build-runner
+        shell: pwsh
+        run: |
+          if ("${{ inputs.working_directory }}" -eq "github_workspace") 
+          {
+            $workingDirectory = "${{ github.workspace }}"
+          }
+          else
+          {
+            $workingDirectory = "${{ inputs.working_directory }}"
+          }
+          
+          .\Run-Docker.ps1 `
+            -WorkingDirectory $workingDirectory `
+            -BuildContext ${{ github.workspace }} `
+            -PushDockerImage ${{ inputs.push_docker_image }} `
+            -DebugMode ${{ inputs.enable_debug_mode }} `
+            -DockerImageName 'terraform-azure-docker-gh-action/runner' `
+            -DockerFileName 'Runner.Dockerfile' `
+            -RegistryUsername ${{ secrets.RegistryUsername }} `
+            -RegistryPassword ${{ secrets.RegistryPassword }} `
+            -ImageOrg ${{ github.repository_owner }}
+          
+      
