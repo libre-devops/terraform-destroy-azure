@@ -17,7 +17,7 @@ on:
       docker_image_name:
         type: string
         description: 'Docker Image name?'
-        default: "terraform-azure-docker-gh-action/base"
+        default: "terraform-azure-docker-gh-action/runner"
       enable_debug_mode:
         type: boolean
         description: 'Whether debug mode should be enable for within the script'
@@ -29,7 +29,7 @@ on:
       docker_file_name:
         type: string
         description: 'Docker file name?'
-        default: "Base.Dockerfile"
+        default: "Runner.Dockerfile"
       push_docker_image:
         type: string
         description: 'Push docker image?'

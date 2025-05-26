@@ -88,13 +88,6 @@ RUN pwsh -Command "Set-PSRepository -Name 'PSGallery' -InstallationPolicy Truste
     Install-Module -Name Microsoft.Graph -Force -AllowClobber -Scope AllUsers -Repository PSGallery; \
     Install-Module -Name Pester -Force -AllowClobber -Scope AllUsers -Repository PSGallery"
 
-# Copy your PowerShell scripts and modules in (do this before USER switch)
-COPY Run-AzTerraform.ps1 /home/${NORMAL_USER}/Run-AzTerraform.ps1
-COPY PowerShellModules/ /home/${NORMAL_USER}/PowerShellModules
-
-RUN chmod +x /home/${NORMAL_USER}/Run-AzTerraform.ps1 \
-    && chown -R ${NORMAL_USER}:${NORMAL_USER} /home/${NORMAL_USER}
-
 # Install Homebrew, tenv, Azure CLI, gcc, pipx, etc.
 USER ${NORMAL_USER}
 WORKDIR /home/${NORMAL_USER}
@@ -107,18 +100,9 @@ RUN /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/instal
 RUN tenv tf install latest --verbose && \
     tenv tf use latest --verbose
 
-USER root
-
 # Clean up cache as normal user
 RUN rm -rf /tmp/* /var/tmp/* ~/.cache /home/${NORMAL_USER}/.cache
 
-COPY entrypoint.ps1 /home/${NORMAL_USER}/entrypoint.ps1
-RUN dos2unix /home/${NORMAL_USER}/entrypoint.ps1 \
-    && chmod +x /home/${NORMAL_USER}/entrypoint.ps1
-
 USER ${NORMAL_USER}
-
-# Set default entrypoint (works for local runs, GH Actions will override if set in action.yml)
-ENTRYPOINT ["pwsh", "/home/builder/entrypoint.ps1"]
 
 SHELL ["pwsh", "-Command"]
