@@ -88,7 +88,16 @@ RUN pwsh -Command "Set-PSRepository -Name 'PSGallery' -InstallationPolicy Truste
     Install-Module -Name Microsoft.Graph -Force -AllowClobber -Scope AllUsers -Repository PSGallery; \
     Install-Module -Name Pester -Force -AllowClobber -Scope AllUsers -Repository PSGallery"
 
-RUN chown -R ${NORMAL_USER}:${NORMAL_USER} /home/${NORMAL_USER}
+# Copy your PowerShell scripts and modules in (do this before USER switch)
+COPY Run-AzTerraform.ps1 /home/${NORMAL_USER}/Run-AzTerraform.ps1
+COPY PowerShellModules/ /home/${NORMAL_USER}/PowerShellModules
+COPY entrypoint.ps1 /home/${NORMAL_USER}/entrypoint.ps1
+
+RUN dos2unix /home/${NORMAL_USER}/entrypoint.ps1 \
+    && dos2unix /home/${NORMAL_USER}/Run-AzTerraform.ps1 \
+    && chown -R ${NORMAL_USER}:${NORMAL_USER} /home/${NORMAL_USER} \
+    && chmod +x /home/${NORMAL_USER}/Run-AzTerraform.ps1 \
+    && chmod +x /home/${NORMAL_USER}/entrypoint.ps1
 
 # Install Homebrew, tenv, Azure CLI, gcc, pipx, etc.
 USER ${NORMAL_USER}
