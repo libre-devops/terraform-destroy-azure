@@ -200,6 +200,11 @@ inputs:
     required: false
     default: 'true'
 
+  allow-no-subscriptions:
+    description: 'Use no subs'
+    required: false
+    default: false
+
   arm-tenant-id:
     description: 'Azure Tenant ID for the service connection / login'
     required: false
@@ -242,6 +247,8 @@ runs:
         tenant-id:       ${{ inputs.arm-tenant-id }}
         subscription-id: ${{ inputs.target-subscription-id != '' && inputs.target-subscription-id || inputs.arm-subscription-id }}
         client-id:       ${{ inputs.arm-client-id }}
+        allow-no-subscriptions: ${{ inputs.allow-no-subscriptions }}
+
 
     # ---------- Client Secret ----------------------------------------------
     - name: Azure Login (Client Secret)
@@ -249,6 +256,7 @@ runs:
       uses: azure/login@v2
       with:
         creds: ${{ inputs.azure-credentials }}
+        allow-no-subscriptions: ${{ inputs.allow-no-subscriptions }}
 
     # ---------- Managed Identity -------------------------------------------
     - name: Azure Login (Managed Identity)
@@ -257,6 +265,8 @@ runs:
       with:
         auth-type: ManagedIdentity
         subscription-id:        ${{ inputs.arm-subscription-id }}
+        allow-no-subscriptions: ${{ inputs.allow-no-subscriptions }}
+
 
     # ---------- Main script -------------------------------------------------
     - name: Run-AzTerraform.ps1
