@@ -88,6 +88,8 @@ RUN pwsh -Command "Set-PSRepository -Name 'PSGallery' -InstallationPolicy Truste
     Install-Module -Name Microsoft.Graph -Force -AllowClobber -Scope AllUsers -Repository PSGallery; \
     Install-Module -Name Pester -Force -AllowClobber -Scope AllUsers -Repository PSGallery"
 
+RUN chown -R ${NORMAL_USER}:${NORMAL_USER} /home/${NORMAL_USER}
+
 # Install Homebrew, tenv, Azure CLI, gcc, pipx, etc.
 USER ${NORMAL_USER}
 WORKDIR /home/${NORMAL_USER}
