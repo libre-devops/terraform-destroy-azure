@@ -248,29 +248,23 @@ try
                     -StacksToRun $TerraformStackToRun
 
         # ──────────────────── REVERSE execution order for destroys ────────────────
-        if ($convertedRunTerraformPlanDestroy -or $convertedRunTerraformDestroy)
-        {
+        # ──────────────────── REVERSE execution order for destroys ────────────────
+        if ($convertedRunTerraformPlanDestroy -or $convertedRunTerraformDestroy) {
+            _LogMessage -Level 'DEBUG' -Message "Begin reverse‐order logic for destroy" -InvocationName $MyInvocation.MyCommand.Name
+            _LogMessage -Level 'DEBUG' -Message "Original stackFolders: $($stackFolders -join ', ')" -InvocationName $MyInvocation.MyCommand.Name
 
-            # select numeric-prefix folders
-            $numeric = $stackFolders | Where-Object {
-                ($_ -split '[\\/]')[-1] -match '^\d+_'
-            }
+            # Pick out those folders whose name starts with digits_, sort them descending by that leading number
+            $numericFolders = $stackFolders |
+                    Where-Object { ($_ -split '[\\/]+')[-1] -match '^\d+_' } |
+                    Sort-Object { [int](($_ -split '[\\/]+')[-1] -replace '^(\d+)_.*','$1') } -Descending
 
-            # sort & reverse them
-            $ordered = $numeric | Sort-Object {
-                [int](
-                (($_ -split '[\\/]')[-1]) -replace '^(\d+)_.*', '$1'
-                )
-            }
-            [array]::Reverse($ordered)
+            # Everything else stays in original order
+            $otherFolders = $stackFolders | Where-Object { $_ -notin $numericFolders }
 
-            # capture any non-numeric ones
-            $others = $stackFolders | Where-Object {
-                ($_ -split '[\\/]')[-1] -notmatch '^\d+_'
-            }
+            # Recombine
+            $stackFolders = $numericFolders + $otherFolders
 
-            # recombine
-            $stackFolders = $ordered + $others
+            _LogMessage -Level 'DEBUG' -Message "Reordered stackFolders: $($stackFolders -join ', ')" -InvocationName $MyInvocation.MyCommand.Name
         }
 
 
