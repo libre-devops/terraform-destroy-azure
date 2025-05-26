@@ -1,4 +1,4 @@
-name: 'Run Docker - Base'
+name: 'Run Docker - Runner'
 
 # Allow run manually
 on:
