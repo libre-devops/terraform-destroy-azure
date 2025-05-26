@@ -267,7 +267,6 @@ runs:
     # ---------- Main script -------------------------------------------------
     - name: Run-AzTerraform.ps1
       shell: pwsh
-      working-directory: ${{ inputs.terraform-code-location }}
       env:
         ARM_SUBSCRIPTION_ID:  ${{ inputs.target-subscription-id != '' && inputs.target-subscription-id || inputs.arm-subscription-id }}
         ARM_USE_AZUREAD:      ${{ inputs.backend-use-azure-ad-auth }}
