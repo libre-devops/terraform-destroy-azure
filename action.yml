@@ -113,7 +113,7 @@ inputs:
   install-tenv-terraform:
     description: 'Whether to install Tenv and Terraform via Tenv'
     required: false
-    default: 'false'
+    default: 'true'
 
   install-azure-cli:
     description: 'Whether to install Azure CLI'
@@ -168,7 +168,7 @@ inputs:
   install-checkov:
     description: 'Whether to install Checkov'
     required: false
-    default: 'false'
+    default: 'true'
 
   checkov-skip-check:
     description: 'Comma-separated Checkov IDs to skip'
