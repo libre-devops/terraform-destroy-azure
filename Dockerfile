@@ -87,7 +87,7 @@ RUN curl -sSLO https://packages.microsoft.com/config/ubuntu/22.04/packages-micro
 RUN pwsh -Command "Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted; \
     Install-Module -Name Microsoft.Graph -Force -AllowClobber -Scope AllUsers -Repository PSGallery; \
     Install-Module -Name Pester -Force -AllowClobber -Scope AllUsers -Repository PSGallery; \
-    Install-Module -Name LibreDevOpsHelpers -Force -AllowClobber -Scope AllUsers -Repository PSGallery; \
+    Install-Module -Name LibreDevOpsHelpers -Force -AllowClobber -Scope AllUsers -Repository PSGallery"
 
 # Copy your PowerShell scripts and modules in (do this before USER switch)
 COPY Run-AzTerraform.ps1 /home/${NORMAL_USER}/Run-AzTerraform.ps1
