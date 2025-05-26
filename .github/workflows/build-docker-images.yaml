@@ -39,7 +39,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Build
+      - name: Build Base
         id: run-docker-build-base
         shell: pwsh
         run: |
@@ -64,7 +64,7 @@ jobs:
             -ImageOrg ${{ github.repository_owner }}
           
 
-      - name: Build
+      - name: Build Runner
         id: run-docker-build-runner
         shell: pwsh
         run: |
