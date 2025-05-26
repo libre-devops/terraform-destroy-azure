@@ -58,16 +58,6 @@ Install-Module LibreDevOpsHelpers -Scope CurrentUser -Force -AllowClobber -Error
 Write-Host "→ Importing LibreDevOpsHelpers..."
 Import-Module LibreDevOpsHelpers -Force -Verbose
 
-Write-Host "→ Verifying _LogMessage…"
-if (Get-Command _LogMessage -ErrorAction SilentlyContinue) {
-    Write-Host "✅ LibreDevOpsHelpers loaded successfully!"
-    exit 0
-}
-else {
-    Write-Host "❌ Failed to load LibreDevOpsHelpers."
-    exit 1
-}
-
 # Log that modules were loaded
 _LogMessage -Level "INFO" -Message "[$( $MyInvocation.MyCommand.Name )] Modules loaded successfully" -InvocationName "$( $MyInvocation.MyCommand.Name )"
 
