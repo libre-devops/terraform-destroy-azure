@@ -19,11 +19,11 @@ COPY Run-AzTerraform.ps1 /home/${NORMAL_USER}/Run-AzTerraform.ps1
 COPY PowerShellModules/ /home/${NORMAL_USER}/PowerShellModules
 COPY entrypoint.ps1 /home/${NORMAL_USER}/entrypoint.ps1
 
-RUN dos2unix /home/${NORMAL_USER}/entrypoint.ps1 \
-    && dos2unix /home/${NORMAL_USER}/Run-AzTerraform.ps1 \
-    && chown -R ${NORMAL_USER}:${NORMAL_USER} /home/${NORMAL_USER} \
-    && chmod +x /home/${NORMAL_USER}/Run-AzTerraform.ps1 \
-    && chmod +x /home/${NORMAL_USER}/entrypoint.ps1
+RUN dos2unix /home/${$Env:NORMAL_USER}/entrypoint.ps1 \
+    && dos2unix /home/${$Env:NORMAL_USER}/Run-AzTerraform.ps1 \
+    && chown -R ${$Env:NORMAL_USER}:${$Env:NORMAL_USER} /home/${$Env:NORMAL_USER} \
+    && chmod +x /home/${$Env:NORMAL_USER}/Run-AzTerraform.ps1 \
+    && chmod +x /home/${$Env:NORMAL_USER}/entrypoint.ps1
 
 USER ${NORMAL_USER}
 WORKDIR /home/${NORMAL_USER}
