@@ -13,7 +13,7 @@ inputs:
   terraform-code-location:
     description: 'Path to Terraform code'
     required: false
-    default: 'terrafom'
+    default: '.'
 
   terraform-stack-to-run-json:
     description: 'JSON array of stacks to run (e.g. ["all"])'
@@ -235,10 +235,6 @@ inputs:
 runs:
   using: composite
   steps:
-
-    - name: Checkout repository
-      uses: actions/checkout@v3
-
     # ---------- OIDC --------------------------------------------------------
     - name: Azure Login (OIDC)
       if: ${{ inputs.use-azure-oidc-login == 'true' && inputs.use-azure-service-connection == 'true' }}

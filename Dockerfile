@@ -92,11 +92,9 @@ RUN pwsh -Command "Set-PSRepository -Name 'PSGallery' -InstallationPolicy Truste
 COPY Run-AzTerraform.ps1 /home/${NORMAL_USER}/Run-AzTerraform.ps1
 COPY PowerShellModules/ /home/${NORMAL_USER}/PowerShellModules
 
-RUN dos2unix /home/${NORMAL_USER}/entrypoint.ps1 \
-    && dos2unix /home/${NORMAL_USER}/Run-AzTerraform.ps1 \
+RUN dos2unix /home/${NORMAL_USER}/Run-AzTerraform.ps1 \
     && chown -R ${NORMAL_USER}:${NORMAL_USER} /home/${NORMAL_USER} \
     && chmod +x /home/${NORMAL_USER}/Run-AzTerraform.ps1 \
-    && chmod +x /home/${NORMAL_USER}/entrypoint.ps1
 
 # Install Homebrew, tenv, Azure CLI, gcc, pipx, etc.
 USER ${NORMAL_USER}

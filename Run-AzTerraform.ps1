@@ -45,20 +45,7 @@ $fullTerraformCodePath = Join-Path -Path $currentWorkingDirectory -ChildPath $Te
 $scriptDir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 
 # Import all required modules
-$modules = @("Logger", "Utils", "AzureCliLogin", "Terraform", "Homebrew", "Checkov", "Tenv", "Choco", "TerraformDocs")
-foreach ($module in $modules)
-{
-    $modulePath = Join-Path -Path $scriptDir -ChildPath "PowerShellModules/$module.psm1"
-    if (Test-Path $modulePath)
-    {
-        Import-Module $modulePath -Force -ErrorAction Stop
-    }
-    else
-    {
-        Write-Host "ERROR:  [$( $MyInvocation.MyCommand.Name )] Module not found: $modulePath" -ForegroundColor Red
-        exit 1
-    }
-}
+Install-Module
 
 # Log that modules were loaded
 _LogMessage -Level "INFO" -Message "[$( $MyInvocation.MyCommand.Name )] Modules loaded successfully" -InvocationName "$( $MyInvocation.MyCommand.Name )"
