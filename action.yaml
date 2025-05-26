@@ -1,4 +1,4 @@
-name: 'Libre DevOps – Terraform for Azure (composite)'
+name: 'Libre DevOps – Terraform Plan for Azure'
 description: 'Run the Run-AzTerraform.ps1 script with terraform plan parameters'
 author: 'Craig Thacker (craig@craigthacker.dev)'
 branding:
